@@ -1,0 +1,105 @@
+{
+  "themes": [
+    {"key": "lifestyle", "label": "Lifestyle"},
+    {"key": "health", "label": "Gesundheit"},
+    {"key": "motivation", "label": "Motivation"},
+    {"key": "politics", "label": "Politik"},
+    {"key": "relationships", "label": "Beziehungen"},
+    {"key": "spirituality", "label": "Spiritualität"},
+    {"key": "religion", "label": "Religion"},
+    {"key": "belongingCommunity", "label": "Zugehörigkeit / Gemeinschaft"},
+    {"key": "other", "label": "Anderes"}
+  ],
+  "blocks": [
+    {
+      "posts": [
+        {"filename": "post1_ID385643404.png", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "post2_ID385743404.png", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "post3_ID385843404.png", "type": "thematic_control", "themes": ["motivation"]},
+        {"filename": "post4_ID385943404.png", "type": "filler", "themes": ["relationships"]},
+        {"filename": "post5_ID386043404.png", "type": "filler", "themes": ["lifestyle"]}
+      ]
+    },
+    {
+      "posts": [
+        {"filename": "post6_ID386143404.png", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "post7_ID386243404.png", "type": "explicit_religion", "themes": ["religion"]},
+        {"filename": "post8_ID386343404.png", "type": "filler", "themes": ["health"]},
+        {"filename": "post9_ID386443404.png", "type": "spiritual_implicit", "themes": ["spirituality"]},
+        {"filename": "post10_ID386543404.png", "type": "thematic_control", "themes": ["politics"]}
+      ]
+    },
+    {
+      "posts": [
+        {"filename": "post11_ID386643404.png", "type": "explicit_religion", "themes": ["religion"]},
+        {"filename": "post12_ID386743404.png", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "post13_ID386843404.png", "type": "thematic_control", "themes": ["health"]},
+        {"filename": "post14_ID386943404.png", "type": "filler", "themes": ["relationships"]},
+        {"filename": "post15_ID387043404.png", "type": "spiritual_implicit", "themes": ["spirituality"]}
+      ]
+    },
+    {
+      "posts": [
+        {"filename": "post16_ID387143404.png", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "post17_ID387243404.png", "type": "spiritual_implicit", "themes": ["spirituality"]},
+        {"filename": "post18_ID387343404.png", "type": "filler", "themes": ["motivation"]},
+        {"filename": "post19_ID387443404.png", "type": "explicit_religion", "themes": ["religion"]},
+        {"filename": "post20_ID387543404.png", "type": "filler", "themes": ["lifestyle"]}
+      ]
+    },
+    {
+      "posts": [
+        {"filename": "post21_ID387643404.png", "type": "thematic_control", "themes": ["politics"]},
+        {"filename": "post22_ID387743404.png", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "post23_ID387843404.png", "type": "explicit_religion", "themes": ["religion"]},
+        {"filename": "post24_ID387943404.png", "type": "filler", "themes": ["relationships"]},
+        {"filename": "post25_ID388043404.png", "type": "spiritual_implicit", "themes": ["spirituality"]}
+      ]
+    },
+    {
+      "posts": [
+        {"filename": "post26_ID388143404.png", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "post27_ID388243404.png", "type": "filler", "themes": ["health"]},
+        {"filename": "post28_ID388343404.png", "type": "spiritual_implicit", "themes": ["spirituality", "belonging_community"]},
+        {"filename": "post29_ID388443404.png", "type": "thematic_control", "themes": ["motivation"]},
+        {"filename": "post30_ID388543404.png", "type": "explicit_religion", "themes": ["religion", "belonging_community"]}
+      ]
+    },
+    {
+      "posts": [
+        {"filename": "post31_ID388643404.png", "type": "explicit_religion", "themes": ["religion"]},
+        {"filename": "post32_ID388743404.png", "type": "thematic_control", "themes": ["politics"]},
+        {"filename": "post33_ID388843404.png", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "post34_ID388943404.png", "type": "spiritual_implicit", "themes": ["spirituality"]},
+        {"filename": "post35_ID389043404.png", "type": "filler", "themes": ["relationships"]}
+      ]
+    },
+    {
+      "posts": [
+        {"filename": "post36_ID389143404.png", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "post37_ID389243404.png", "type": "explicit_religion", "themes": ["religion"]},
+        {"filename": "post38_ID389343404.png", "type": "spiritual_implicit", "themes": ["spirituality"]},
+        {"filename": "post39_ID389443404.png", "type": "filler", "themes": ["health"]},
+        {"filename": "post40_ID389543404.png", "type": "thematic_control", "themes": ["motivation"]}
+      ]
+    },
+    {
+      "posts": [
+        {"filename": "post41_ID389643404.png", "type": "thematic_control", "themes": ["politics"]},
+        {"filename": "post42_ID389743404.png", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "post43_ID389843404.png", "type": "filler", "themes": ["relationships"]},
+        {"filename": "post44_ID389943404.png", "type": "explicit_religion", "themes": ["religion"]},
+        {"filename": "post45_ID390043404.png", "type": "filler", "themes": ["lifestyle"]}
+      ]
+    },
+    {
+      "posts": [
+        {"filename": "post46_ID390143404.png", "type": "spiritual_implicit", "themes": ["spirituality"]},
+        {"filename": "post47_ID390243404.png", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "post48_ID390343404.png", "type": "filler", "themes": ["health"]},
+        {"filename": "post49_ID390443404.png", "type": "thematic_control", "themes": ["belonging_community"]},
+        {"filename": "post50_ID390543404.png", "type": "explicit_religion", "themes": ["religion"]}
+      ]
+    }
+  ]
+}

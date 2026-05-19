@@ -1,0 +1,21 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# Angular build
+frontend/dist/
+
+# IDE
+.idea/
+
+# Data
+backend/data/
+
+# OS
+.DS_Store
+/frontend/.vscode/
+/frontend/.angular/

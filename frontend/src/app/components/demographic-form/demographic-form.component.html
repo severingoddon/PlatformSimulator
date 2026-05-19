@@ -1,0 +1,69 @@
+<div class="form-wrapper">
+  <div class="form-container">
+    <div class="logo-section">
+      <span class="instagram-logo">Instagram</span>
+    </div>
+
+    <p class="subtitle">Bitte füllen Sie die folgenden Angaben aus, bevor Sie fortfahren.</p>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="field">
+        <input type="email" formControlName="email" placeholder="E-Mail-Adresse">
+        @if (form.get('email')?.touched && form.get('email')?.invalid) {
+          <span class="error">Bitte geben Sie eine gültige E-Mail-Adresse ein.</span>
+        }
+      </div>
+
+      <div class="field">
+        <input type="number" formControlName="alter" placeholder="Alter" min="13" max="120">
+        @if (form.get('alter')?.touched && form.get('alter')?.invalid) {
+          <span class="error">Bitte geben Sie Ihr Alter ein (13-120).</span>
+        }
+      </div>
+
+      <div class="field">
+        <select formControlName="religionsangehoerigkeit">
+          <option value="" disabled>Religionsangehörigkeit</option>
+          @for (option of religionOptions; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <select formControlName="bildungsabschluss">
+          <option value="" disabled>Höchster Bildungsabschluss</option>
+          @for (option of bildungOptions; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <input type="text" formControlName="herkunft" placeholder="Herkunft">
+        @if (form.get('herkunft')?.touched && form.get('herkunft')?.invalid) {
+          <span class="error">Bitte geben Sie Ihre Herkunft ein.</span>
+        }
+      </div>
+
+      <div class="field slider-field">
+        <label class="slider-label">
+          Politische Einstellung
+          <span class="slider-value">{{ form.get('politischeEinstellung')?.value }}</span>
+        </label>
+        <div class="slider-labels">
+          <span>Links</span>
+          <span>Rechts</span>
+        </div>
+        <input type="range" formControlName="politischeEinstellung" min="1" max="10" step="1">
+        <div class="slider-ticks">
+          @for (tick of [1,2,3,4,5,6,7,8,9,10]; track tick) {
+            <span>{{ tick }}</span>
+          }
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" [disabled]="form.invalid">Weiter</button>
+    </form>
+  </div>
+</div>

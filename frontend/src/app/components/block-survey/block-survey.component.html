@@ -1,0 +1,77 @@
+<div class="survey-overlay">
+  <div class="survey-container">
+
+    <!-- Progress -->
+    <div class="survey-progress">
+      <span class="block-label">Block {{ blockNumber() }} von 10</span>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="blockNumber() * 10"></div>
+      </div>
+    </div>
+
+    <!-- Step 1: Theme Recognition -->
+    @if (step() === 1) {
+      <div class="survey-step">
+        <h2 class="survey-title">Welche Themen hast du in den letzten 5 Beiträgen bemerkt?</h2>
+        <p class="survey-subtitle">Mehrfachauswahl möglich</p>
+
+        <div class="theme-grid">
+          @for (theme of shuffledThemes(); track theme.key) {
+            <button
+              class="theme-chip"
+              [class.selected]="isThemeSelected(theme.key)"
+              (click)="toggleTheme(theme.key)">
+              {{ theme.label }}
+            </button>
+          }
+        </div>
+
+        <button
+          class="survey-btn primary"
+          [disabled]="!hasSelection()"
+          (click)="proceedToLocalization()">
+          Weiter
+        </button>
+      </div>
+    }
+
+    <!-- Step 2: Theme Localization -->
+    @if (step() === 2) {
+      <div class="survey-step">
+        <h2 class="survey-title">In welchen Beiträgen hast du diese Themen bemerkt?</h2>
+        <p class="survey-subtitle">Wähle alle zutreffenden Beiträge aus</p>
+
+        @for (theme of themesToLocalize(); track theme.key) {
+          <div class="localization-section">
+            <h3 class="theme-label">{{ theme.label }}</h3>
+            <div class="post-thumbnails">
+              @for (post of blockPosts(); track post.postId; let i = $index) {
+                <button
+                  class="thumbnail-btn"
+                  [class.selected]="isLocalized(theme.key, i)"
+                  (click)="toggleLocalization(theme.key, i)">
+                  <img [src]="post.imageUrl" [alt]="'Beitrag ' + (i + 1)">
+                  <span class="thumb-label">Beitrag {{ i + 1 }}</span>
+                  @if (isLocalized(theme.key, i)) {
+                    <div class="thumb-check">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" fill="#0095f6"/>
+                        <path d="M17 9L10.5 15.5L7 12" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <button
+          class="survey-btn primary"
+          (click)="submitSurvey()">
+          Weiter
+        </button>
+      </div>
+    }
+  </div>
+</div>

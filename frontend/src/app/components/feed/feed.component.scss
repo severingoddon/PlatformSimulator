@@ -1,0 +1,126 @@
+:host {
+  display: block;
+  background-color: #000;
+  min-height: 100vh;
+}
+
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #000;
+  border-bottom: 1px solid #262626;
+
+  .top-bar-content {
+    max-width: 470px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    height: 60px;
+  }
+
+  .instagram-logo {
+    font-family: 'Grand Hotel', cursive;
+    font-size: 28px;
+    color: #f5f5f5;
+  }
+
+  .top-bar-right {
+    display: flex;
+    gap: 16px;
+
+    button {
+      color: #f5f5f5;
+      display: flex;
+      align-items: center;
+
+      svg {
+        display: block;
+      }
+    }
+  }
+}
+
+.feed-container {
+  max-width: 470px;
+  margin: 0 auto;
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+.block-end {
+  padding: 24px 16px 40px;
+  display: flex;
+  justify-content: center;
+
+  .continue-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background-color: #262626;
+    color: #f5f5f5;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid #363636;
+
+    &:hover {
+      background-color: #363636;
+    }
+
+    &:active {
+      transform: scale(0.96);
+    }
+
+    svg {
+      display: block;
+    }
+  }
+}
+
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #000;
+  border-top: 1px solid #262626;
+
+  .bottom-bar-content {
+    max-width: 470px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 8px 0;
+    height: 50px;
+  }
+
+  .nav-item {
+    color: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+
+    svg {
+      display: block;
+    }
+
+    .profile-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: #363636;
+      border: 1px solid #f5f5f5;
+    }
+  }
+}
