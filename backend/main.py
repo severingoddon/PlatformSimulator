@@ -8,6 +8,7 @@ from pathlib import Path
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from models import BlockSurveySubmission, PostData, PostFeedback, PostsResponse
@@ -49,6 +50,7 @@ RECOGNITION_CSV = DATA_DIR / "theme_recognition.csv"
 LOCALIZATION_CSV = DATA_DIR / "theme_localization.csv"
 CONFIG_PATH = BASE_DIR / "block_config.json"
 POST_IMAGES_DIR = BASE_DIR.parent / "postImages"
+FRONTEND_DIR = BASE_DIR.parent / "frontend" / "dist" / "frontend" / "browser"
 
 csv_lock = threading.Lock()
 block_config: list[list[dict]] = []
@@ -112,7 +114,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200", "http://0.0.0.0:4200"],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -207,5 +209,16 @@ async def submit_block_survey(survey: BlockSurveySubmission):
     return {"success": True}
 
 
+if FRONTEND_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend-assets")
+
+    @app.get("/{path:path}")
+    async def serve_frontend(path: str):
+        file_path = FRONTEND_DIR / path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        return FileResponse(FRONTEND_DIR / "index.html")
+
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=3005)

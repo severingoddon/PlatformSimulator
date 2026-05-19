@@ -21,6 +21,7 @@ export class PostCardComponent {
   followed = signal(false);
   saved = signal(false);
   shared = signal(false);
+  imageLoaded = signal(false);
 
   private mockTimestamps = ['1 Std.', '2 Std.', '3 Std.', '5 Std.', '8 Std.', '12 Std.', '1 T.', '2 T.', '3 T.'];
 
@@ -71,6 +72,17 @@ export class PostCardComponent {
   toggleShared() {
     this.shared.update(v => !v);
     this.sendFeedback();
+  }
+
+  private lastTap = 0;
+
+  onTouchEnd(event: TouchEvent) {
+    const now = Date.now();
+    if (now - this.lastTap < 300) {
+      event.preventDefault();
+      this.onDoubleTap();
+    }
+    this.lastTap = now;
   }
 
   onDoubleTap() {

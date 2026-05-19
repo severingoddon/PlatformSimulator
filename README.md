@@ -14,7 +14,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Läuft auf `http://localhost:8000`
+Läuft auf `http://localhost:3005`
 
 ### Frontend (Angular)
 
@@ -41,6 +41,34 @@ Post-Bilder liegen in `postImages/`.
 2. Feed zeigt 5 Posts pro Block mit Instagram-Buttons (Like, Follow, Save, Share)
 3. Nach jedem Block: Theme Recognition (welche Themen bemerkt?) → Theme Localization (in welchen Posts?)
 4. Nach Block 10: Danke-Seite
+
+## Deployment (Raspberry Pi)
+
+Frontend lokal builden:
+
+```bash
+cd frontend && npm install && npx ng build && cd ..
+```
+
+Auf den Raspi kopieren:
+
+```bash
+scp -r backend postImages pi@192.168.1.51:~/PlatformSimulator/
+scp -r frontend/dist pi@192.168.1.51:~/PlatformSimulator/frontend/
+```
+
+Auf dem Raspi starten:
+
+```bash
+ssh pi@192.168.1.51
+cd ~/PlatformSimulator/backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python main.py
+```
+
+Läuft auf Port 3005 — ein Prozess, ein Port. Im Router nur Port 3005 öffnen.
 
 ## Datenausgabe
 

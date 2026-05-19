@@ -29,8 +29,17 @@
   </div>
 
   <!-- Image -->
-  <div class="post-image" (dblclick)="onDoubleTap()">
-    <img [src]="post().imageUrl" [alt]="'Post von ' + post().profileName" loading="lazy">
+  <div class="post-image" (dblclick)="onDoubleTap()" (touchend)="onTouchEnd($event)">
+    @if (!imageLoaded()) {
+      <div class="image-placeholder">
+        <div class="spinner"></div>
+      </div>
+    }
+    <img
+      [src]="post().imageUrl"
+      [alt]="'Post von ' + post().profileName"
+      [class.loaded]="imageLoaded()"
+      (load)="imageLoaded.set(true)">
   </div>
 
   <!-- Action Bar -->
