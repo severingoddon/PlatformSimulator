@@ -69,22 +69,25 @@ Participants are identified by a **participant ID (`pid`)** that Qualtrics puts 
 How it works for participants:
 
 ```
-Qualtrics survey (tab 1)                 This tool (tab 2)
-─────────────────────────                ─────────────────
+Qualtrics survey                          This tool
+─────────────────────────                 ─────────────────────────────
 consent, demographics, …
-page with link + code field  ── link ──→  feed + questions (3 blocks)
-                                          end page shows a code
-enter code, continue  ←── go back to tab 1 ──┘
+page with link + code field  ── link ──→  short welcome screen
+                                          feed + questions (3 blocks)
+                                          end page: code + copy button
+enter code, continue  ←── "Back to the survey" button ──┘
 rest of the survey
 ```
 
+The tool opens **in the same browser tab** as the survey. (Qualtrics' current survey layout ignores "open in new tab" for links, so we do not rely on it.) The end page has a **"Back to the survey"** button that returns to the survey page, with all answers so far and the same Response ID. If a participant opened the feed in a new tab themselves, the end page asks them to switch back to the survey tab instead. This was tested end to end with Chrome and Safari on desktop, and with iPhone and Android phones (emulated).
+
 ### Step 1: Add the link to the tool
 
-In your Qualtrics survey, at the point where participants should do the feed, add a **Text / Graphic** question with an instruction and the link. To make the link open in a **new tab**, edit the question text in the **HTML View** and paste:
+In your Qualtrics survey, at the point where participants should do the feed, add a **Text / Graphic** question with an instruction and the link. Edit the question text in the **HTML View** and paste:
 
 ```html
-<p>Please click the link below. It opens in a new tab. When you are done, come back to this tab and enter the code you were shown.</p>
-<p><a href="https://<your-server>/?pid=${e://Field/ResponseID}" target="_blank">Open the feed</a></p>
+<p>Please click the link below to open a short social media feed. At the end of the feed you will get a code. Then come back here and enter the code below.</p>
+<p><a href="https://<your-server>/?pid=${e://Field/ResponseID}"><b>Open the feed</b></a></p>
 ```
 
 Replace `<your-server>` with the address of the tool. Leave `${e://Field/ResponseID}` exactly as it is: Qualtrics replaces it automatically with each participant's unique Response ID (e.g. `R_3kT9xZp2LmQ8vWd`).
@@ -97,7 +100,7 @@ On the **same page**, below the link, add a **Text Entry** question, e.g. "Pleas
 
 Then: **Validation → Custom validation**, condition **"[this question] Is Equal to 73914"**, and an error message such as "This code is not correct. Please complete the feed first." Participants can only continue once they enter the correct code.
 
-The code is shown on the tool's end page. The default is `73914`. To change it, edit the `"thankYou"` → `"message"` text in `backend/texts/en.json` (see [Texts and language](#texts-and-language)), run `docker compose restart`, and use the same code in the Qualtrics validation. Numbers work best (no confusion about upper/lower case).
+The code is shown in large digits on the tool's end page, with a "Copy code" button. The default is `73914`. To change it, set `COMPLETION_CODE` in `docker-compose.yml`, run `docker compose up -d`, and use the same code in the Qualtrics validation. Numbers work best (no confusion about upper/lower case).
 
 The code is the same for everybody, so it only serves as a reminder and a simple gate. The reliable check is step 3.
 
