@@ -48,7 +48,8 @@
     "localizationTitle": "In welchen Beiträgen hast du diese Themen bemerkt?",
     "localizationSubtitle": "Wähle alle zutreffenden Beiträge aus",
     "postLabel": "Beitrag {number}",
-    "next": "Weiter"
+    "next": "Weiter",
+    "saveError": "Deine Antworten konnten nicht gespeichert werden. Bitte prüfe deine Internetverbindung und klicke nochmals auf Weiter."
   },
 
   "invalidLink": {

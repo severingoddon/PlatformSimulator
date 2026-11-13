@@ -3,17 +3,21 @@ import json
 import os
 import sys
 import threading
-from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from models import BlockSurveySubmission, PostData, PostFeedback, PostsResponse
+from models import BlockSurveySubmission, EngagementEvent, PostData, PostsResponse
+
+try:
+    import fcntl  # Linux / macOS (the Docker container is Linux)
+except ImportError:  # Windows local development: no single-instance guard
+    fcntl = None
 
 PROFILE_NAMES = [
     "alpen_marco", "zueri_lisa", "berg_wanderer", "swiss_adventures",
@@ -31,14 +35,14 @@ PROFILE_NAMES = [
     "nord_stern", "tief_blick",
 ]
 
+# engagement.csv is an event log: one row per click (like, unlike, follow, ...).
 ENGAGEMENT_COLUMNS = [
-    "timestamp", "pid", "blockNumber", "postId", "postPosition",
-    "liked", "followed", "saved", "shared",
+    "timestamp", "pid", "blockNumber", "postId", "postPosition", "action", "eventId",
 ]
 
 LOCALIZATION_COLUMNS = [
     "timestamp", "pid", "blockNumber", "theme",
-    "post1", "post2", "post3", "post4", "post5",
+    "post1", "post2", "post3", "post4", "post5", "submissionId",
 ]
 
 # Where participants are sent after the last block, e.g. a follow-up Qualtrics survey.
@@ -59,8 +63,16 @@ REFERENCE_TEXTS = TEXTS_DIR / "en.json"
 POST_IMAGES_DIR = BASE_DIR.parent / "postImages"
 FRONTEND_DIR = BASE_DIR.parent / "frontend" / "dist" / "frontend" / "browser"
 
+# All CSV writes go through this lock, one row at a time. Together with the
+# single-instance guard below this guarantees that rows never get mixed up,
+# no matter how many participants send data at the same time.
 csv_lock = threading.Lock()
+# IDs of events / survey submissions already written (to ignore retried duplicates)
+seen_ids: set[str] = set()
+instance_lock_file = None
+
 block_config: list[list[dict]] = []
+post_ids: set[str] = set()
 theme_keys: list[str] = []
 recognition_columns: list[str] = []
 texts: dict = {}
@@ -103,16 +115,22 @@ def load_texts():
     missing += [f"themes.{k}" for k in missing_themes if f"themes.{k}" not in missing]
     if missing:
         raise ConfigError(f"{path.name} is missing these texts: {', '.join(missing)}")
-engagement_store: dict[tuple[str, str], dict] = {}
 
 
 def load_block_config():
-    global block_config, theme_keys, recognition_columns
+    global block_config, post_ids, theme_keys, recognition_columns
     with open(CONFIG_PATH, encoding="utf-8") as f:
         data = json.load(f)
     block_config = [block["posts"] for block in data["blocks"]]
+    post_ids = {Path(post["filename"]).stem for block in block_config for post in block}
     theme_keys = data["themes"]
-    recognition_columns = ["timestamp", "pid", "blockNumber", *theme_keys]
+    recognition_columns = ["timestamp", "pid", "blockNumber", *theme_keys, "submissionId"]
+    for number, block in enumerate(block_config, start=1):
+        if len(block) != 5:
+            raise ConfigError(f"block_config.json: block {number} has {len(block)} posts, every block needs exactly 5")
+        for post in block:
+            if not (POST_IMAGES_DIR / post["filename"]).is_file():
+                raise ConfigError(f"block_config.json: image {post['filename']} not found in postImages/")
 
 
 def archive_if_columns_changed(path: Path, columns: list[str]):
@@ -129,52 +147,61 @@ def archive_if_columns_changed(path: Path, columns: list[str]):
         print(f"Columns of {path.name} changed - old file kept as {archived.name}")
 
 
-def load_engagement_csv():
-    if not ENGAGEMENT_CSV.exists():
+def acquire_instance_lock():
+    """Only one server process may write the CSV files. A second one (e.g. a second
+    container on the same data folder) would mix up rows, so it refuses to start."""
+    global instance_lock_file
+    if fcntl is None:
         return
-    with open(ENGAGEMENT_CSV, newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            key = (row["pid"], row["postId"])
-            engagement_store[key] = row
+    instance_lock_file = open(DATA_DIR / ".writer.lock", "w")
+    try:
+        fcntl.flock(instance_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        sys.exit("\nERROR: another instance of the tool is already writing to the data/ folder. "
+                 "Run only one instance (docker compose up starts exactly one).\n")
 
 
-def write_engagement_csv():
-    with open(ENGAGEMENT_CSV, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=ENGAGEMENT_COLUMNS)
-        writer.writeheader()
-        for row in engagement_store.values():
-            writer.writerow(row)
+def load_seen_ids():
+    """Remember event / submission IDs already on disk, so retried requests are not written twice."""
+    for path, column in [(ENGAGEMENT_CSV, "eventId"), (RECOGNITION_CSV, "submissionId")]:
+        if path.exists():
+            with open(path, newline="", encoding="utf-8") as f:
+                seen_ids.update(row[column] for row in csv.DictReader(f) if row.get(column))
 
 
-def append_csv(path: Path, columns: list[str], row: dict):
-    with csv_lock:
-        write_header = not path.exists() or path.stat().st_size == 0
-        with open(path, "a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=columns)
-            if write_header:
-                writer.writeheader()
-            writer.writerow(row)
+def append_rows(path: Path, columns: list[str], rows: list[dict]):
+    """Append rows to a CSV file and force them onto the disk.
+    Must be called while holding csv_lock. Files are only ever appended to, never
+    rewritten, so a crash can at most lose the row being written at that moment."""
+    write_header = not path.exists() or path.stat().st_size == 0
+    with open(path, "a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=columns)
+        if write_header:
+            writer.writeheader()
+        writer.writerows(rows)
+        f.flush()
+        os.fsync(f.fileno())
 
 
-# Load configuration before the server starts, so mistakes show up as a clear message.
+def now_utc() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+# Everything below runs once before the server starts, so problems show up as a clear message.
 try:
     load_block_config()
     load_texts()
 except ConfigError as e:
     sys.exit(f"\nCONFIGURATION ERROR: {e}\n")
 
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+acquire_instance_lock()
+archive_if_columns_changed(ENGAGEMENT_CSV, ENGAGEMENT_COLUMNS)
+archive_if_columns_changed(RECOGNITION_CSV, recognition_columns)
+archive_if_columns_changed(LOCALIZATION_CSV, LOCALIZATION_COLUMNS)
+load_seen_ids()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    archive_if_columns_changed(ENGAGEMENT_CSV, ENGAGEMENT_COLUMNS)
-    archive_if_columns_changed(RECOGNITION_CSV, recognition_columns)
-    archive_if_columns_changed(LOCALIZATION_CSV, LOCALIZATION_COLUMNS)
-    load_engagement_csv()
-    yield
-
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -182,6 +209,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+
+@app.middleware("http")
+async def cache_headers(request: Request, call_next):
+    """Let browsers cache images and app files, so they are downloaded only once."""
+    response = await call_next(request)
+    path = request.url.path
+    if path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+    elif path.startswith("/images/"):
+        response.headers["Cache-Control"] = "public, max-age=86400"
+    elif path.endswith((".js", ".css")):
+        # Angular puts a content hash into these file names, so they never change
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    else:
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
 
 app.mount("/images", StaticFiles(directory=str(POST_IMAGES_DIR)), name="images")
 
@@ -211,64 +257,77 @@ async def get_posts():
     return PostsResponse(posts=posts)
 
 
-@app.post("/api/feedback")
-async def submit_feedback(feedback: PostFeedback):
-    key = (feedback.pid, feedback.postId)
+# Note: write endpoints are plain "def" (not "async def"), so FastAPI runs them in a
+# worker thread and a disk write never blocks the other participants' requests.
+
+@app.post("/api/engagement")
+def submit_engagement(event: EngagementEvent):
+    if event.postId not in post_ids:
+        raise HTTPException(422, "unknown postId")
     row = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "pid": feedback.pid,
-        "blockNumber": str(feedback.blockNumber),
-        "postId": feedback.postId,
-        "postPosition": str(feedback.postPosition),
-        "liked": str(feedback.liked).lower(),
-        "followed": str(feedback.followed).lower(),
-        "saved": str(feedback.saved).lower(),
-        "shared": str(feedback.shared).lower(),
+        "timestamp": now_utc(),
+        "pid": event.pid,
+        "blockNumber": event.blockNumber,
+        "postId": event.postId,
+        "postPosition": event.postPosition,
+        "action": event.action,
+        "eventId": event.eventId,
     }
     with csv_lock:
-        engagement_store[key] = row
-        write_engagement_csv()
+        if event.eventId not in seen_ids:
+            append_rows(ENGAGEMENT_CSV, ENGAGEMENT_COLUMNS, [row])
+            seen_ids.add(event.eventId)
     return {"success": True}
 
 
 @app.post("/api/block-survey")
-async def submit_block_survey(survey: BlockSurveySubmission):
-    now = datetime.now(timezone.utc).isoformat()
+def submit_block_survey(survey: BlockSurveySubmission):
+    unknown = [loc.theme for loc in survey.localizations if loc.theme not in theme_keys]
+    if unknown:
+        raise HTTPException(422, f"unknown theme: {unknown[0]}")
+    now = now_utc()
     recognition_row = {
         "timestamp": now,
         "pid": survey.pid,
-        "blockNumber": str(survey.blockNumber),
+        "blockNumber": survey.blockNumber,
         **{key: str(survey.themes.get(key, False)).lower() for key in theme_keys},
+        "submissionId": survey.submissionId,
     }
-    append_csv(RECOGNITION_CSV, recognition_columns, recognition_row)
+    localization_rows = [{
+        "timestamp": now,
+        "pid": survey.pid,
+        "blockNumber": survey.blockNumber,
+        "theme": loc.theme,
+        "post1": str(loc.post1).lower(),
+        "post2": str(loc.post2).lower(),
+        "post3": str(loc.post3).lower(),
+        "post4": str(loc.post4).lower(),
+        "post5": str(loc.post5).lower(),
+        "submissionId": survey.submissionId,
+    } for loc in survey.localizations]
 
-    for loc in survey.localizations:
-        loc_row = {
-            "timestamp": now,
-            "pid": survey.pid,
-            "blockNumber": str(survey.blockNumber),
-            "theme": loc.theme,
-            "post1": str(loc.post1).lower(),
-            "post2": str(loc.post2).lower(),
-            "post3": str(loc.post3).lower(),
-            "post4": str(loc.post4).lower(),
-            "post5": str(loc.post5).lower(),
-        }
-        append_csv(LOCALIZATION_CSV, LOCALIZATION_COLUMNS, loc_row)
-
+    with csv_lock:
+        if survey.submissionId not in seen_ids:
+            append_rows(RECOGNITION_CSV, recognition_columns, [recognition_row])
+            if localization_rows:
+                append_rows(LOCALIZATION_CSV, LOCALIZATION_COLUMNS, localization_rows)
+            seen_ids.add(survey.submissionId)
     return {"success": True}
 
 
 if FRONTEND_DIR.exists():
-    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend-assets")
+    FRONTEND_ROOT = FRONTEND_DIR.resolve()
 
     @app.get("/{path:path}")
     async def serve_frontend(path: str):
-        file_path = FRONTEND_DIR / path
-        if file_path.is_file():
+        file_path = (FRONTEND_ROOT / path).resolve()
+        # Only serve files inside the frontend folder (blocks "../" tricks)
+        if file_path.is_relative_to(FRONTEND_ROOT) and file_path.is_file():
             return FileResponse(file_path)
-        return FileResponse(FRONTEND_DIR / "index.html")
+        return FileResponse(FRONTEND_ROOT / "index.html")
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=3005)
+    # Exactly one process on purpose: all CSV writes are serialized in this process.
+    # One process easily handles hundreds of simultaneous participants.
+    uvicorn.run(app, host="0.0.0.0", port=3005, workers=1)

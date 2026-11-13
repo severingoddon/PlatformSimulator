@@ -1,6 +1,7 @@
 import { Component, input, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PostData, PostFeedback } from '../../models/post.model';
+import { EngagementAction, PostData } from '../../models/post.model';
+import { newRequestId } from '../../utils/id.util';
 import { UserSessionService } from '../../services/user-session.service';
 import { ApiService } from '../../services/api.service';
 import { ConfigService } from '../../services/config.service';
@@ -58,22 +59,22 @@ export class PostCardComponent {
 
   toggleLike() {
     this.liked.update(v => !v);
-    this.sendFeedback();
+    this.sendEvent(this.liked() ? 'like' : 'unlike');
   }
 
   toggleFollow() {
     this.followed.update(v => !v);
-    this.sendFeedback();
+    this.sendEvent(this.followed() ? 'follow' : 'unfollow');
   }
 
   toggleSaved() {
     this.saved.update(v => !v);
-    this.sendFeedback();
+    this.sendEvent(this.saved() ? 'save' : 'unsave');
   }
 
   toggleShared() {
     this.shared.update(v => !v);
-    this.sendFeedback();
+    this.sendEvent(this.shared() ? 'share' : 'unshare');
   }
 
   private lastTap = 0;
@@ -90,25 +91,23 @@ export class PostCardComponent {
   onDoubleTap() {
     if (!this.liked()) {
       this.liked.set(true);
-      this.sendFeedback();
+      this.sendEvent('like');
     }
   }
 
-  private sendFeedback() {
+  private sendEvent(action: EngagementAction) {
     const pid = this.session.getPid();
     if (!pid) return;
 
-    const feedback: PostFeedback = {
+    this.api.sendEngagement({
+      eventId: newRequestId(),
+      pid,
       postId: this.post().postId,
       blockNumber: this.post().blockNumber,
       postPosition: this.post().postPosition,
-      liked: this.liked(),
-      followed: this.followed(),
-      saved: this.saved(),
-      shared: this.shared(),
-      pid,
-    };
-
-    this.api.sendFeedback(feedback).subscribe();
+      action,
+    }).subscribe({
+      error: err => console.error('Could not save engagement event', err),
+    });
   }
 }

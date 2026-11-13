@@ -7,6 +7,7 @@ import { UserSessionService } from '../../services/user-session.service';
 import { PostData, BlockSurveyPayload } from '../../models/post.model';
 import { PostCardComponent } from '../post-card/post-card.component';
 import { BlockSurveyComponent, BlockSurveyResult } from '../block-survey/block-survey.component';
+import { newRequestId } from '../../utils/id.util';
 
 type FeedState = 'viewing' | 'survey' | 'completed';
 
@@ -29,7 +30,7 @@ export class FeedComponent implements OnInit {
   allPosts = signal<PostData[]>([]);
   currentBlock = signal(1);
   feedState = signal<FeedState>('viewing');
-  totalBlocks = 10;
+  totalBlocks = 0;
 
   currentBlockPosts = computed(() => {
     const block = this.currentBlock();
@@ -37,12 +38,16 @@ export class FeedComponent implements OnInit {
   });
 
   showContinueButton = signal(false);
+  saving = signal(false);
+  saveFailed = signal(false);
+  /** One ID per block survey; reused if the participant has to click "Next" again after an error. */
+  private submissionId = '';
 
   ngOnInit() {
     this.api.getPosts().subscribe(response => {
       this.allPosts.set(response.posts);
       const maxBlock = Math.max(...response.posts.map(p => p.blockNumber), 0);
-      this.totalBlocks = maxBlock || 10;
+      this.totalBlocks = maxBlock;
     });
   }
 
@@ -52,28 +57,42 @@ export class FeedComponent implements OnInit {
 
   openSurvey() {
     this.showContinueButton.set(false);
+    this.submissionId = newRequestId();
+    this.saveFailed.set(false);
     this.feedState.set('survey');
   }
 
   onSurveyCompleted(result: BlockSurveyResult) {
     const pid = this.session.getPid();
-    if (!pid) return;
+    if (!pid || this.saving()) return;
 
     const payload: BlockSurveyPayload = {
+      submissionId: this.submissionId,
       blockNumber: this.currentBlock(),
       pid,
       themes: result.themes,
       localizations: result.localizations,
     };
 
-    this.api.submitBlockSurvey(payload).subscribe(() => {
-      if (this.currentBlock() >= this.totalBlocks) {
-        this.finishStudy(pid);
-      } else {
-        this.currentBlock.update(b => b + 1);
-        this.feedState.set('viewing');
-        window.scrollTo({ top: 0 });
-      }
+    this.saving.set(true);
+    this.saveFailed.set(false);
+    this.api.submitBlockSurvey(payload).subscribe({
+      next: () => {
+        this.saving.set(false);
+        if (this.currentBlock() >= this.totalBlocks) {
+          this.finishStudy(pid);
+        } else {
+          this.currentBlock.update(b => b + 1);
+          this.feedState.set('viewing');
+          window.scrollTo({ top: 0 });
+        }
+      },
+      error: err => {
+        // All retries failed: show a message, the participant can click "Next" again
+        console.error('Could not save block survey', err);
+        this.saving.set(false);
+        this.saveFailed.set(true);
+      },
     });
   }
 

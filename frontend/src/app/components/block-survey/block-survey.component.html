@@ -66,8 +66,12 @@
           </div>
         }
 
+        @if (saveFailed()) {
+          <p class="save-error">{{ texts.survey.saveError }}</p>
+        }
         <button
           class="survey-btn primary"
+          [disabled]="saving()"
           (click)="submitSurvey()">
           {{ texts.survey.next }}
         </button>

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { PostsResponse, PostFeedback, BlockSurveyPayload } from '../models/post.model';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, retry, throwError, timer } from 'rxjs';
+import { PostsResponse, EngagementEvent, BlockSurveyPayload } from '../models/post.model';
 import { Texts } from '../models/texts.model';
 
 export interface ThemeConfig {
@@ -16,6 +16,21 @@ export interface AppConfig {
   texts: Texts;
 }
 
+/**
+ * Retry a failed request up to 5 times (after 0.5s, 1s, 2s, 4s, 8s) on network
+ * problems or server errors. Requests the server rejected as invalid (4xx) are not
+ * retried. Retries are safe: every request carries an ID and duplicates are ignored.
+ */
+function retryOnNetworkError<T>() {
+  return retry<T>({
+    count: 5,
+    delay: (error: unknown, attempt: number) =>
+      error instanceof HttpErrorResponse && error.status >= 400 && error.status < 500
+        ? throwError(() => error)
+        : timer(500 * 2 ** (attempt - 1)),
+  });
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient);
@@ -28,11 +43,11 @@ export class ApiService {
     return this.http.get<PostsResponse>('/api/posts');
   }
 
-  sendFeedback(feedback: PostFeedback): Observable<{ success: boolean }> {
-    return this.http.post<{ success: boolean }>('/api/feedback', feedback);
+  sendEngagement(event: EngagementEvent): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>('/api/engagement', event).pipe(retryOnNetworkError());
   }
 
   submitBlockSurvey(survey: BlockSurveyPayload): Observable<{ success: boolean }> {
-    return this.http.post<{ success: boolean }>('/api/block-survey', survey);
+    return this.http.post<{ success: boolean }>('/api/block-survey', survey).pipe(retryOnNetworkError());
   }
 }

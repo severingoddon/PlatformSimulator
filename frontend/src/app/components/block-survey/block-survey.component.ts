@@ -31,6 +31,8 @@ export class BlockSurveyComponent implements OnInit {
   blockNumber = input.required<number>();
   themes = input.required<ThemeOption[]>();
   totalBlocks = input.required<number>();
+  saving = input(false);
+  saveFailed = input(false);
   completed = output<BlockSurveyResult>();
 
   texts = inject(ConfigService).texts;

@@ -58,6 +58,7 @@ docker compose up -d --build
 - The tool serves plain HTTP on port 3005. Participants should reach it via **HTTPS** (e.g. `https://feed.your-lab.stanford.edu`). Ask your IT to put it behind their HTTPS reverse proxy / web server and forward to port 3005.
 - The tool restarts automatically after a crash or server reboot.
 - Back up the `data/` folder regularly. It contains all results.
+- Run exactly **one** instance of the tool (`docker compose up` does that). One instance easily handles 100+ participants at the same time (tested); a second instance on the same `data/` folder refuses to start, because two writers would mix up the CSV files.
 - Change the completion code if you like (see [Connecting Qualtrics](#connecting-qualtrics), step 2).
 - Do one complete test run yourself (Qualtrics → tool → back to Qualtrics) and check that your Response ID shows up in all CSV files.
 
@@ -112,16 +113,17 @@ After data collection you have:
 ```r
 qualtrics   <- read.csv("qualtrics_export.csv")
 recognition <- read.csv("data/theme_recognition.csv")
-engagement  <- read.csv("data/engagement.csv")
 
 # Response IDs that finished all blocks of the feed
 n_blocks  <- 3
 completed <- unique(recognition$pid[recognition$blockNumber == n_blocks])
 qualtrics$feed_completed <- qualtrics$ResponseID %in% completed
 
-# Combine Qualtrics answers with feed data (one row per post interaction)
-combined <- merge(qualtrics, engagement, by.x = "ResponseID", by.y = "pid")
+# Combine Qualtrics answers with the answers after each block
+combined <- merge(qualtrics, recognition, by.x = "ResponseID", by.y = "pid")
 ```
+
+To get the final like / follow / save / share state per post from `engagement.csv`, see [Output data](#output-data).
 
 ### Alternative setup: automatic return
 
@@ -135,11 +137,30 @@ Three CSV files in `data/`. Every row contains the participant ID (`pid`) and a 
 
 | File | One row per … | Columns |
 |------|---------------|---------|
-| `engagement.csv` | participant × post they interacted with | `blockNumber`, `postId`, `postPosition` (1–5 within the block), `liked`, `followed`, `saved`, `shared` (true/false, final state) |
+| `engagement.csv` | click on a post (event log) | `blockNumber`, `postId`, `postPosition` (1–5 within the block), `action`: `like`, `unlike`, `follow`, `unfollow`, `save`, `unsave`, `share`, `unshare` |
 | `theme_recognition.csv` | participant × block | one true/false column per theme: did the participant notice this theme in the block? |
 | `theme_localization.csv` | participant × block × theme | `theme`, `post1` … `post5`: in which of the 5 posts did the participant see this theme? |
 
-Posts a participant did not interact with at all do not appear in `engagement.csv` (= nothing liked/followed/saved/shared).
+The columns `eventId` / `submissionId` are technical IDs (used to make sure nothing is stored twice if a participant's connection drops). You can ignore them.
+
+**`engagement.csv` is a log of every click**, in the order they happened. If someone likes a post and then unlikes it, there are two rows. This keeps the full sequence and timing. To get the **final state** per participant and post (liked yes/no, followed yes/no, …), use this in R:
+
+```r
+engagement <- read.csv("data/engagement.csv")
+engagement <- engagement[order(engagement$timestamp), ]
+engagement$type  <- sub("^un", "", engagement$action)       # "unlike" -> "like"
+engagement$value <- !startsWith(engagement$action, "un")    # like = TRUE, unlike = FALSE
+
+# keep the last click per participant, post and type
+last  <- engagement[!duplicated(engagement[c("pid", "postId", "type")], fromLast = TRUE), ]
+final <- reshape(last[c("pid", "postId", "type", "value")],
+                 idvar = c("pid", "postId"), timevar = "type", direction = "wide")
+final[is.na(final)] <- FALSE   # e.g. liked but never saved -> saved = FALSE
+# columns: pid, postId, value.like, value.follow, value.save, value.share
+# (a column only appears if at least one participant used that button)
+```
+
+Posts a participant never clicked on do not appear in `engagement.csv` (= nothing liked / followed / saved / shared).
 
 If you change the themes in `block_config.json` after data has already been recorded, the old CSV file is kept as `<name>.archived-<date>.csv` and a new file is started, so columns never get mixed.
 
@@ -190,7 +211,7 @@ The study content is controlled by `backend/block_config.json`:
 - **themes** – the theme keys offered in the questions after each block. The questions and the CSV columns adapt automatically. Each theme also needs a display name under `"themes"` in every text file (see above).
 - **blocks** – currently 3 blocks. Each block needs **exactly 5 posts**. Add or remove whole blocks to change the length of the feed. Per post: file name, type (`explicit_religion`, `spiritual_implicit`, `filler`, `thematic_control`) and ground-truth themes.
 
-Post images are stored in `postImages/` (50 images are available, the config uses 15 of them). Use JPEG files of about 1100 px width: they load fast on phones and look sharp.
+Post images are stored in `postImages/` (50 images are available, the config uses 15 of them). Use JPEG files of about 1100 px width: they load fast on phones and look sharp. If an image listed in `block_config.json` is missing, the tool does not start and tells you which one.
 
 After changing `block_config.json` or images, rebuild with `docker compose up -d --build`.
 

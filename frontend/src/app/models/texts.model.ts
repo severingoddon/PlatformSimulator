@@ -39,6 +39,7 @@ export interface Texts {
     localizationSubtitle: string;
     postLabel: string;
     next: string;
+    saveError: string;
   };
   invalidLink: { title: string; message: string };
   thankYou: { title: string; message: string; subMessage: string };

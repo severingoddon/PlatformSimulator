@@ -48,7 +48,8 @@
     "localizationTitle": "In which posts did you notice these topics?",
     "localizationSubtitle": "Select all posts that apply",
     "postLabel": "Post {number}",
-    "next": "Next"
+    "next": "Next",
+    "saveError": "Your answers could not be saved. Please check your internet connection and click Next again."
   },
 
   "invalidLink": {

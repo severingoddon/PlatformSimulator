@@ -10,15 +10,17 @@ export interface PostsResponse {
   posts: PostData[];
 }
 
-export interface PostFeedback {
+export type EngagementAction =
+  'like' | 'unlike' | 'follow' | 'unfollow' | 'save' | 'unsave' | 'share' | 'unshare';
+
+/** One click on a post. Stored as one row in engagement.csv. */
+export interface EngagementEvent {
+  eventId: string;
+  pid: string;
   postId: string;
   blockNumber: number;
   postPosition: number;
-  liked: boolean;
-  followed: boolean;
-  saved: boolean;
-  shared: boolean;
-  pid: string;
+  action: EngagementAction;
 }
 
 export interface ThemeLocalizationEntry {
@@ -31,6 +33,7 @@ export interface ThemeLocalizationEntry {
 }
 
 export interface BlockSurveyPayload {
+  submissionId: string;
   blockNumber: number;
   pid: string;
   themes: Record<string, boolean>;
