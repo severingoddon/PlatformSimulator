@@ -13,92 +13,29 @@
   "blocks": [
     {
       "posts": [
-        {"filename": "01_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "02_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "03_spiritual.png", "type": "spiritual_implicit", "themes": ["spirituality"]},
-        {"filename": "04_spiritual.png", "type": "spiritual_implicit", "themes": ["spirituality"]},
-        {"filename": "05_religious.png", "type": "explicit_religion", "themes": ["religion"]}
+        {"filename": "01_random.jpg", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "02_random.jpg", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "03_spiritual.jpg", "type": "spiritual_implicit", "themes": ["spirituality"]},
+        {"filename": "04_spiritual.jpg", "type": "spiritual_implicit", "themes": ["spirituality"]},
+        {"filename": "05_religious.jpg", "type": "explicit_religion", "themes": ["religion"]}
       ]
     },
     {
       "posts": [
-        {"filename": "06_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "07_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "08_religious.png", "type": "explicit_religion", "themes": ["religion"]},
-        {"filename": "09_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "10_spiritual.png", "type": "spiritual_implicit", "themes": ["spirituality"]}
+        {"filename": "06_random.jpg", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "07_random.jpg", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "08_religious.jpg", "type": "explicit_religion", "themes": ["religion"]},
+        {"filename": "09_random.jpg", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "10_spiritual.jpg", "type": "spiritual_implicit", "themes": ["spirituality"]}
       ]
     },
     {
       "posts": [
-        {"filename": "11_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "12_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "13_spiritual.png", "type": "spiritual_implicit", "themes": ["spirituality"]},
-        {"filename": "14_religious.png", "type": "explicit_religion", "themes": ["religion"]},
-        {"filename": "15_random.png", "type": "filler", "themes": ["lifestyle"]}
-      ]
-    },
-    {
-      "posts": [
-        {"filename": "16_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "17_spiritual.png", "type": "spiritual_implicit", "themes": ["spirituality"]},
-        {"filename": "18_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "19_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "20_religious.png", "type": "explicit_religion", "themes": ["religion"]}
-      ]
-    },
-    {
-      "posts": [
-        {"filename": "21_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "22_spiritual.png", "type": "spiritual_implicit", "themes": ["spirituality"]},
-        {"filename": "23_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "24_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "25_random.png", "type": "filler", "themes": ["lifestyle"]}
-      ]
-    },
-    {
-      "posts": [
-        {"filename": "26_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "27_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "28_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "29_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "30_random.png", "type": "filler", "themes": ["lifestyle"]}
-      ]
-    },
-    {
-      "posts": [
-        {"filename": "31_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "32_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "33_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "34_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "35_spiritual.png", "type": "spiritual_implicit", "themes": ["spirituality"]}
-      ]
-    },
-    {
-      "posts": [
-        {"filename": "36_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "37_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "38_religious.png", "type": "explicit_religion", "themes": ["religion"]},
-        {"filename": "39_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "40_random.png", "type": "filler", "themes": ["lifestyle"]}
-      ]
-    },
-    {
-      "posts": [
-        {"filename": "41_religious.png", "type": "explicit_religion", "themes": ["religion"]},
-        {"filename": "42_random.png", "type": "filler", "themes": ["lifestyle"]},
-        {"filename": "43_religious.png", "type": "explicit_religion", "themes": ["religion"]},
-        {"filename": "44_religious.png", "type": "explicit_religion", "themes": ["religion"]},
-        {"filename": "45_spiritual.png", "type": "spiritual_implicit", "themes": ["spirituality"]}
-      ]
-    },
-    {
-      "posts": [
-        {"filename": "46_spiritual.png", "type": "spiritual_implicit", "themes": ["spirituality"]},
-        {"filename": "47_spiritual.png", "type": "spiritual_implicit", "themes": ["spirituality"]},
-        {"filename": "48_religious.png", "type": "explicit_religion", "themes": ["religion"]},
-        {"filename": "49_religious.png", "type": "explicit_religion", "themes": ["religion"]},
-        {"filename": "50_random.png", "type": "filler", "themes": ["lifestyle"]}
+        {"filename": "11_random.jpg", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "12_random.jpg", "type": "filler", "themes": ["lifestyle"]},
+        {"filename": "13_spiritual.jpg", "type": "spiritual_implicit", "themes": ["spirituality"]},
+        {"filename": "14_religious.jpg", "type": "explicit_religion", "themes": ["religion"]},
+        {"filename": "15_random.jpg", "type": "filler", "themes": ["lifestyle"]}
       ]
     }
   ]

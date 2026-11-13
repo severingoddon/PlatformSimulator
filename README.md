@@ -1,6 +1,6 @@
 # PlatformSimulator
 
-A simulated Instagram-style feed for research studies. Participants scroll through 50 posts (10 blocks of 5), can like / follow / save / share them, and answer a short question after each block.
+A simulated Instagram-style feed for research studies. Participants scroll through 15 posts (3 blocks of 5), can like / follow / save / share them, and answer a short question after each block.
 
 The tool is designed to be used **together with a survey tool such as Qualtrics**: somewhere in the Qualtrics survey, participants open this tool via a link, do the feed, and then continue the survey. Demographics and consent are collected in Qualtrics, not here. This tool only records what participants do in the feed, linked to their Qualtrics ID.
 
@@ -71,7 +71,7 @@ How it works for participants:
 Qualtrics survey (tab 1)                 This tool (tab 2)
 ─────────────────────────                ─────────────────
 consent, demographics, …
-page with link + code field  ── link ──→  feed + questions (10 blocks)
+page with link + code field  ── link ──→  feed + questions (3 blocks)
                                           end page shows a code
 enter code, continue  ←── go back to tab 1 ──┘
 rest of the survey
@@ -107,15 +107,16 @@ After data collection you have:
 - the Qualtrics export (column `ResponseID`)
 - the CSV files from this tool (column `pid`, which contains the same Response ID)
 
-**Check who really completed the feed:** a participant completed it if `theme_recognition.csv` contains block 10 for their ID. Exclude everyone else (e.g. someone who got the code from another participant). Example in R:
+**Check who really completed the feed:** a participant completed it if `theme_recognition.csv` contains the last block (currently block 3) for their ID. Exclude everyone else (e.g. someone who got the code from another participant). Example in R:
 
 ```r
 qualtrics   <- read.csv("qualtrics_export.csv")
 recognition <- read.csv("data/theme_recognition.csv")
 engagement  <- read.csv("data/engagement.csv")
 
-# Response IDs that finished all 10 blocks of the feed
-completed <- unique(recognition$pid[recognition$blockNumber == 10])
+# Response IDs that finished all blocks of the feed
+n_blocks  <- 3
+completed <- unique(recognition$pid[recognition$blockNumber == n_blocks])
 qualtrics$feed_completed <- qualtrics$ResponseID %in% completed
 
 # Combine Qualtrics answers with feed data (one row per post interaction)
@@ -147,7 +148,7 @@ If you change the themes in `block_config.json` after data has already been reco
 1. The participant arrives via the link from Qualtrics.
 2. The feed shows 5 posts per block with Instagram-style buttons (like, follow, save, share).
 3. After each block: which themes did you notice? → in which posts?
-4. After block 10: end page with the completion code (or automatic redirect, if `RETURN_URL` is set).
+4. After the last block: end page with the completion code (or automatic redirect, if `RETURN_URL` is set).
 
 Note: if a participant reloads the page in the middle, the feed starts again at block 1 (with the same `pid`). Their block answers may then appear twice in the CSV files; use the latest timestamp per `pid` and block.
 
@@ -187,9 +188,9 @@ docker compose logs
 The study content is controlled by `backend/block_config.json`:
 
 - **themes** – the theme keys offered in the questions after each block. The questions and the CSV columns adapt automatically. Each theme also needs a display name under `"themes"` in every text file (see above).
-- **blocks** – 10 blocks with 5 posts each. Per post: file name, type (`explicit_religion`, `spiritual_implicit`, `filler`, `thematic_control`) and ground-truth themes.
+- **blocks** – currently 3 blocks. Each block needs **exactly 5 posts**. Add or remove whole blocks to change the length of the feed. Per post: file name, type (`explicit_religion`, `spiritual_implicit`, `filler`, `thematic_control`) and ground-truth themes.
 
-Post images are stored in `postImages/`.
+Post images are stored in `postImages/` (50 images are available, the config uses 15 of them). Use JPEG files of about 1100 px width: they load fast on phones and look sharp.
 
 After changing `block_config.json` or images, rebuild with `docker compose up -d --build`.
 
