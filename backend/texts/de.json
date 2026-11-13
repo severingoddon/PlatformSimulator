@@ -65,9 +65,15 @@
   },
 
   "thankYou": {
-    "title": "Vielen Dank!",
-    "message": "Du hast diesen Teil der Studie abgeschlossen. Bitte kehre zur Umfrage zurück und gib diesen Code ein, um fortzufahren: 73914",
+    "title": "Fast geschafft!",
+    "message": "Du hast den Feed abgeschlossen. Um mit der Umfrage weiterzumachen, brauchst du diesen Code:",
+    "codeLabel": "Dein Code",
+    "copyButton": "Code kopieren",
+    "copied": "Kopiert!",
+    "step1": "Kopiere den Code oder schreib ihn dir auf.",
+    "step2": "Geh zurück zur Umfrage.",
+    "step3": "Gib den Code dort ein.",
     "backButton": "Zurück zur Umfrage",
-    "tabHint": "Bitte wechsle zurück zum Tab mit der Umfrage."
+    "tabHint": "Wechsle jetzt zurück zum Tab mit der Umfrage."
   }
 }

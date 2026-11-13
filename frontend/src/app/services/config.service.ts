@@ -22,6 +22,10 @@ export class ConfigService {
     return this.config.themes;
   }
 
+  get completionCode(): string {
+    return this.config.completionCode;
+  }
+
   get returnUrl(): string {
     return this.config.returnUrl;
   }

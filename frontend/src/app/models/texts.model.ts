@@ -48,7 +48,18 @@ export interface Texts {
     saveError: string;
   };
   invalidLink: { title: string; message: string };
-  thankYou: { title: string; message: string; backButton: string; tabHint: string };
+  thankYou: {
+    title: string;
+    message: string;
+    codeLabel: string;
+    copyButton: string;
+    copied: string;
+    step1: string;
+    step2: string;
+    step3: string;
+    backButton: string;
+    tabHint: string;
+  };
 }
 
 /** Replaces {placeholders} in a text, e.g. fmt('Block {block} of {total}', { block: 1, total: 10 }). */

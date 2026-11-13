@@ -65,9 +65,15 @@
   },
 
   "thankYou": {
-    "title": "Thank you!",
-    "message": "You have finished this part of the study. Please go back to the survey and enter this code to continue: 73914",
+    "title": "Almost done!",
+    "message": "You have finished the feed. To continue the survey, you need this code:",
+    "codeLabel": "Your code",
+    "copyButton": "Copy code",
+    "copied": "Copied!",
+    "step1": "Copy the code or write it down.",
+    "step2": "Go back to the survey.",
+    "step3": "Enter the code there.",
     "backButton": "Back to the survey",
-    "tabHint": "Please switch back to the tab with the survey."
+    "tabHint": "Now switch back to the tab with the survey."
   }
 }

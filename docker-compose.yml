@@ -9,6 +9,9 @@ services:
       # Optional: a link to send participants to automatically instead,
       # "?pid=<participant id>" is added (see README, "Alternative setup").
       RETURN_URL: ""
+      # Code shown at the end of the feed. Must be the same as in the Qualtrics
+      # validation of the code question ("Is Equal to ...").
+      COMPLETION_CODE: "73914"
       # Language of all texts participants see: "en" or "de"
       # (= file name in backend/texts/, e.g. "de" uses backend/texts/de.json)
       LANGUAGE: "en"

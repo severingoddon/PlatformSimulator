@@ -13,6 +13,8 @@ export interface AppConfig {
   themes: ThemeConfig[];
   /** Where participants are sent after the last block (empty = show thank-you page). */
   returnUrl: string;
+  /** Code shown on the end page, entered by participants in the survey. */
+  completionCode: string;
   texts: Texts;
 }
 

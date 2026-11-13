@@ -8,10 +8,25 @@
     </div>
     <h1 class="title">{{ texts.thankYou.title }}</h1>
     <p class="message">{{ texts.thankYou.message }}</p>
+
+    <div class="code-box">
+      <span class="code-label">{{ texts.thankYou.codeLabel }}</span>
+      <span class="code" aria-live="polite">{{ code }}</span>
+      <button class="copy-btn" [class.copied]="copied()" (click)="copyCode()">
+        {{ copied() ? texts.thankYou.copied : texts.thankYou.copyButton }}
+      </button>
+    </div>
+
+    <ol class="steps">
+      <li>{{ texts.thankYou.step1 }}</li>
+      <li>{{ texts.thankYou.step2 }}</li>
+      <li>{{ texts.thankYou.step3 }}</li>
+    </ol>
+
     @if (canGoBack()) {
       <button class="back-btn" (click)="backToSurvey()">{{ texts.thankYou.backButton }}</button>
     } @else {
-      <p class="sub-message">{{ texts.thankYou.tabHint }}</p>
+      <p class="tab-hint">{{ texts.thankYou.tabHint }}</p>
     }
   </div>
 </div>

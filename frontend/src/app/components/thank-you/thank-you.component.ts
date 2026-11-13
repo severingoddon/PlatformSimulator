@@ -8,7 +8,10 @@ import { ConfigService } from '../../services/config.service';
   styleUrl: './thank-you.component.scss',
 })
 export class ThankYouComponent {
-  texts = inject(ConfigService).texts;
+  private config = inject(ConfigService);
+  texts = this.config.texts;
+  code = this.config.completionCode;
+  copied = signal(false);
 
   /**
    * The feed was opened in the same tab as the survey: the survey is one step back
@@ -16,6 +19,25 @@ export class ThankYouComponent {
    * so we show a hint to switch tabs instead of the button.
    */
   canGoBack = signal(window.history.length > 1);
+
+  async copyCode() {
+    try {
+      await navigator.clipboard.writeText(this.code);
+    } catch {
+      // Older browsers / no permission: copy via a temporary text field
+      const field = document.createElement('textarea');
+      field.value = this.code;
+      field.setAttribute('readonly', '');
+      field.style.position = 'fixed';
+      field.style.opacity = '0';
+      document.body.appendChild(field);
+      field.select();
+      document.execCommand('copy');
+      field.remove();
+    }
+    this.copied.set(true);
+    setTimeout(() => this.copied.set(false), 2500);
+  }
 
   backToSurvey() {
     window.history.back();

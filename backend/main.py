@@ -49,6 +49,10 @@ LOCALIZATION_COLUMNS = [
 # "?pid=<id>" is appended automatically. Empty = show the built-in thank-you page.
 RETURN_URL = os.environ.get("RETURN_URL", "").strip()
 
+# Code shown on the end page. Participants enter it in the survey, where it is
+# checked by a validation rule ("Is Equal to"). Both must be the same.
+COMPLETION_CODE = os.environ.get("COMPLETION_CODE", "73914").strip() or "73914"
+
 # Language of all participant-facing texts: loads backend/texts/<LANGUAGE>.json
 LANGUAGE = os.environ.get("LANGUAGE", "en").strip() or "en"
 
@@ -240,7 +244,7 @@ app.mount("/images", StaticFiles(directory=str(POST_IMAGES_DIR)), name="images")
 @app.get("/api/config")
 async def get_config():
     themes = [{"key": key, "label": texts["themes"][key]} for key in theme_keys]
-    return {"themes": themes, "returnUrl": RETURN_URL, "texts": texts}
+    return {"themes": themes, "returnUrl": RETURN_URL, "completionCode": COMPLETION_CODE, "texts": texts}
 
 
 @app.get("/api/posts", response_model=PostsResponse)
