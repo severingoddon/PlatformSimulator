@@ -138,8 +138,8 @@ Three CSV files in `data/`. Every row contains the participant ID (`pid`) and a 
 | File | One row per … | Columns |
 |------|---------------|---------|
 | `engagement.csv` | click on a post (event log) | `blockNumber`, `postId`, `postPosition` (1–5 within the block), `action`: `like`, `unlike`, `follow`, `unfollow`, `save`, `unsave`, `share`, `unshare` |
-| `theme_recognition.csv` | participant × block | one true/false column per theme: did the participant notice this theme in the block? |
-| `theme_localization.csv` | participant × block × theme | `theme`, `post1` … `post5`: in which of the 5 posts did the participant see this theme? |
+| `theme_recognition.csv` | participant × block | one TRUE/FALSE column per theme: did the participant notice this theme in the block? |
+| `theme_localization.csv` | participant × block × theme | `theme`, `post1` … `post5` (TRUE/FALSE): in which of the 5 posts did the participant see this theme? |
 
 The columns `eventId` / `submissionId` are technical IDs (used to make sure nothing is stored twice if a participant's connection drops). You can ignore them.
 

@@ -187,6 +187,11 @@ def now_utc() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def tf(value: bool) -> str:
+    """Write booleans as TRUE / FALSE: read.csv in R, pandas and Excel all recognize this."""
+    return "TRUE" if value else "FALSE"
+
+
 # Everything below runs once before the server starts, so problems show up as a clear message.
 try:
     load_block_config()
@@ -290,7 +295,7 @@ def submit_block_survey(survey: BlockSurveySubmission):
         "timestamp": now,
         "pid": survey.pid,
         "blockNumber": survey.blockNumber,
-        **{key: str(survey.themes.get(key, False)).lower() for key in theme_keys},
+        **{key: tf(survey.themes.get(key, False)) for key in theme_keys},
         "submissionId": survey.submissionId,
     }
     localization_rows = [{
@@ -298,11 +303,11 @@ def submit_block_survey(survey: BlockSurveySubmission):
         "pid": survey.pid,
         "blockNumber": survey.blockNumber,
         "theme": loc.theme,
-        "post1": str(loc.post1).lower(),
-        "post2": str(loc.post2).lower(),
-        "post3": str(loc.post3).lower(),
-        "post4": str(loc.post4).lower(),
-        "post5": str(loc.post5).lower(),
+        "post1": tf(loc.post1),
+        "post2": tf(loc.post2),
+        "post3": tf(loc.post3),
+        "post4": tf(loc.post4),
+        "post5": tf(loc.post5),
         "submissionId": survey.submissionId,
     } for loc in survey.localizations]
 
