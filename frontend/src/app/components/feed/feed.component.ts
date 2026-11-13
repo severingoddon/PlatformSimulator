@@ -57,15 +57,13 @@ export class FeedComponent implements OnInit {
         if (nextBlock === undefined) {
           // Everything answered already: show the end page with the code again
           this.finishStudy(pid);
-        } else if (progress.shownBlock >= nextBlock) {
-          // Interrupted while looking at this block: go straight to its questions
-          this.currentBlock.set(nextBlock);
-          this.openSurvey();
-        } else if (nextBlock > 1 || progress.shownBlock > 0) {
+        } else if (nextBlock === 1 && progress.shownBlock === 0) {
+          // Nothing started yet
+          this.feedState.set('intro');
+        } else {
+          // Interrupted: show the posts of the first block whose questions are not answered yet
           this.currentBlock.set(nextBlock);
           this.showBlock();
-        } else {
-          this.feedState.set('intro');
         }
       },
       // Progress unknown (should not happen after the retries): start normally

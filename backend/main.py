@@ -207,6 +207,30 @@ def append_rows(path: Path, columns: list[str], rows: list[dict]):
         os.fsync(f.fileno())
 
 
+def replace_block_answer(path: Path, columns: list[str], pid: str, block: int, rows: list[dict]):
+    """Replace a participant's earlier answer for a block with a new one.
+    Must be called while holding csv_lock. Rare case, so the whole file is rewritten:
+    first into a temporary file, then swapped in one step (os.replace). After a crash
+    either the old or the new file exists completely, never a half-written one."""
+    kept = []
+    if path.exists():
+        with open(path, newline="", encoding="utf-8") as f:
+            kept = [r for r in csv.DictReader(f) if not (r["pid"] == pid and r["blockNumber"] == str(block))]
+    tmp = path.with_name(path.name + ".tmp")
+    with open(tmp, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=columns)
+        writer.writeheader()
+        writer.writerows(kept + rows)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+    dir_fd = os.open(path.parent, os.O_RDONLY)
+    try:
+        os.fsync(dir_fd)
+    finally:
+        os.close(dir_fd)
+
+
 def now_utc() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -364,8 +388,13 @@ def submit_block_survey(survey: BlockSurveySubmission):
 
     with csv_lock:
         done = completed_blocks.setdefault(survey.pid, set())
-        # Store only the first answer per participant and block (retries, reloads, double clicks)
-        if survey.submissionId not in seen_ids and survey.blockNumber not in done:
+        if survey.submissionId in seen_ids:
+            pass  # same request sent again after a network problem: already stored
+        elif survey.blockNumber in done:
+            # This block was answered before: the new answer replaces the old one
+            replace_block_answer(RECOGNITION_CSV, recognition_columns, survey.pid, survey.blockNumber, [recognition_row])
+            replace_block_answer(LOCALIZATION_CSV, LOCALIZATION_COLUMNS, survey.pid, survey.blockNumber, localization_rows)
+        else:
             append_rows(RECOGNITION_CSV, recognition_columns, [recognition_row])
             if localization_rows:
                 append_rows(LOCALIZATION_CSV, LOCALIZATION_COLUMNS, localization_rows)
