@@ -114,6 +114,7 @@ export class FeedComponent implements OnInit {
         console.error('RETURN_URL is not a valid URL:', returnUrl);
       }
     }
-    this.router.navigate(['/thank-you']);
+    // replaceUrl: one click on the browser's Back button leads straight back to the survey
+    this.router.navigate(['/thank-you'], { replaceUrl: true });
   }
 }
