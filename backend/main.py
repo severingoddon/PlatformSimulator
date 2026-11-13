@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import sys
 import threading
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -44,30 +45,73 @@ LOCALIZATION_COLUMNS = [
 # "?pid=<id>" is appended automatically. Empty = show the built-in thank-you page.
 RETURN_URL = os.environ.get("RETURN_URL", "").strip()
 
+# Language of all participant-facing texts: loads backend/texts/<LANGUAGE>.json
+LANGUAGE = os.environ.get("LANGUAGE", "en").strip() or "en"
+
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 ENGAGEMENT_CSV = DATA_DIR / "engagement.csv"
 RECOGNITION_CSV = DATA_DIR / "theme_recognition.csv"
 LOCALIZATION_CSV = DATA_DIR / "theme_localization.csv"
 CONFIG_PATH = BASE_DIR / "block_config.json"
+TEXTS_DIR = BASE_DIR / "texts"
+REFERENCE_TEXTS = TEXTS_DIR / "en.json"
 POST_IMAGES_DIR = BASE_DIR.parent / "postImages"
 FRONTEND_DIR = BASE_DIR.parent / "frontend" / "dist" / "frontend" / "browser"
 
 csv_lock = threading.Lock()
 block_config: list[list[dict]] = []
 theme_keys: list[str] = []
-theme_list: list[dict] = []
 recognition_columns: list[str] = []
+texts: dict = {}
+
+
+class ConfigError(Exception):
+    pass
+
+
+def missing_keys(reference, actual, prefix="") -> list[str]:
+    """Keys present in the English reference file but missing in another language file."""
+    if not isinstance(reference, dict):
+        return []
+    if not isinstance(actual, dict):
+        return [prefix.rstrip(".") or "(root)"]
+    result = []
+    for key, value in reference.items():
+        if key not in actual:
+            result.append(prefix + key)
+        else:
+            result += missing_keys(value, actual[key], prefix + key + ".")
+    return result
+
+
+def load_texts():
+    global texts
+    path = TEXTS_DIR / f"{LANGUAGE}.json"
+    if not path.exists():
+        available = ", ".join(sorted(f.stem for f in TEXTS_DIR.glob("*.json")))
+        raise ConfigError(f"LANGUAGE={LANGUAGE!r}: file {path.name} not found in texts/. Available: {available}")
+    try:
+        with open(path, encoding="utf-8") as f:
+            texts = json.load(f)
+    except json.JSONDecodeError as e:
+        raise ConfigError(f"{path.name} is not valid JSON (line {e.lineno}, column {e.colno}): {e.msg}")
+
+    with open(REFERENCE_TEXTS, encoding="utf-8") as f:
+        missing = missing_keys(json.load(f), texts)
+    missing_themes = [k for k in theme_keys if k not in texts.get("themes", {})]
+    missing += [f"themes.{k}" for k in missing_themes if f"themes.{k}" not in missing]
+    if missing:
+        raise ConfigError(f"{path.name} is missing these texts: {', '.join(missing)}")
 engagement_store: dict[tuple[str, str], dict] = {}
 
 
 def load_block_config():
-    global block_config, theme_keys, theme_list, recognition_columns
+    global block_config, theme_keys, recognition_columns
     with open(CONFIG_PATH, encoding="utf-8") as f:
         data = json.load(f)
     block_config = [block["posts"] for block in data["blocks"]]
-    theme_list = data["themes"]
-    theme_keys = [t["key"] for t in theme_list]
+    theme_keys = data["themes"]
     recognition_columns = ["timestamp", "pid", "blockNumber", *theme_keys]
 
 
@@ -112,9 +156,16 @@ def append_csv(path: Path, columns: list[str], row: dict):
             writer.writerow(row)
 
 
+# Load configuration before the server starts, so mistakes show up as a clear message.
+try:
+    load_block_config()
+    load_texts()
+except ConfigError as e:
+    sys.exit(f"\nCONFIGURATION ERROR: {e}\n")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_block_config()
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     archive_if_columns_changed(ENGAGEMENT_CSV, ENGAGEMENT_COLUMNS)
     archive_if_columns_changed(RECOGNITION_CSV, recognition_columns)
@@ -137,7 +188,8 @@ app.mount("/images", StaticFiles(directory=str(POST_IMAGES_DIR)), name="images")
 
 @app.get("/api/config")
 async def get_config():
-    return {"themes": theme_list, "returnUrl": RETURN_URL}
+    themes = [{"key": key, "label": texts["themes"][key]} for key in theme_keys]
+    return {"themes": themes, "returnUrl": RETURN_URL, "texts": texts}
 
 
 @app.get("/api/posts", response_model=PostsResponse)

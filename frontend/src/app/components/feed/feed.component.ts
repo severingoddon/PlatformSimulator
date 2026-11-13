@@ -1,7 +1,8 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ApiService, ThemeConfig } from '../../services/api.service';
+import { ApiService } from '../../services/api.service';
+import { ConfigService } from '../../services/config.service';
 import { UserSessionService } from '../../services/user-session.service';
 import { PostData, BlockSurveyPayload } from '../../models/post.model';
 import { PostCardComponent } from '../post-card/post-card.component';
@@ -20,9 +21,12 @@ export class FeedComponent implements OnInit {
   private api = inject(ApiService);
   private session = inject(UserSessionService);
   private router = inject(Router);
+  private config = inject(ConfigService);
+
+  texts = this.config.texts;
+  themes = this.config.themes;
 
   allPosts = signal<PostData[]>([]);
-  themes = signal<ThemeConfig[]>([]);
   currentBlock = signal(1);
   feedState = signal<FeedState>('viewing');
   totalBlocks = 10;
@@ -33,13 +37,8 @@ export class FeedComponent implements OnInit {
   });
 
   showContinueButton = signal(false);
-  private returnUrl = '';
 
   ngOnInit() {
-    this.api.getConfig().subscribe(config => {
-      this.themes.set(config.themes);
-      this.returnUrl = config.returnUrl;
-    });
     this.api.getPosts().subscribe(response => {
       this.allPosts.set(response.posts);
       const maxBlock = Math.max(...response.posts.map(p => p.blockNumber), 0);
@@ -80,14 +79,15 @@ export class FeedComponent implements OnInit {
 
   /** Send the participant back to the survey (with their pid) or show the thank-you page. */
   private finishStudy(pid: string) {
-    if (this.returnUrl) {
+    const returnUrl = this.config.returnUrl;
+    if (returnUrl) {
       try {
-        const url = new URL(this.returnUrl);
+        const url = new URL(returnUrl);
         url.searchParams.set('pid', pid);
         window.location.href = url.toString();
         return;
       } catch {
-        console.error('RETURN_URL is not a valid URL:', this.returnUrl);
+        console.error('RETURN_URL is not a valid URL:', returnUrl);
       }
     }
     this.router.navigate(['/thank-you']);

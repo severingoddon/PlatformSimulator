@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { PostData, PostFeedback } from '../../models/post.model';
 import { UserSessionService } from '../../services/user-session.service';
 import { ApiService } from '../../services/api.service';
+import { ConfigService } from '../../services/config.service';
+import { fmt } from '../../models/texts.model';
 
 @Component({
   selector: 'app-post-card',
@@ -16,6 +18,8 @@ export class PostCardComponent {
 
   private session = inject(UserSessionService);
   private api = inject(ApiService);
+  texts = inject(ConfigService).texts;
+  fmt = fmt;
 
   liked = signal(false);
   followed = signal(false);
@@ -23,12 +27,10 @@ export class PostCardComponent {
   shared = signal(false);
   imageLoaded = signal(false);
 
-  private mockTimestamps = ['1 Std.', '2 Std.', '3 Std.', '5 Std.', '8 Std.', '12 Std.', '1 T.', '2 T.', '3 T.'];
-
   getTimestamp(): string {
     const name = this.post().profileName;
-    const index = name.charCodeAt(0) % this.mockTimestamps.length;
-    return this.mockTimestamps[index];
+    const timestamps = this.texts.post.timestamps;
+    return timestamps[name.charCodeAt(0) % timestamps.length];
   }
 
   getProfileInitial(): string {

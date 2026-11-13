@@ -1,6 +1,8 @@
-import { Component, input, output, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, input, output, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PostData, ThemeLocalizationEntry } from '../../models/post.model';
+import { ConfigService } from '../../services/config.service';
+import { fmt } from '../../models/texts.model';
 
 export interface ThemeOption {
   key: string;
@@ -28,7 +30,11 @@ export class BlockSurveyComponent implements OnInit {
   blockPosts = input.required<PostData[]>();
   blockNumber = input.required<number>();
   themes = input.required<ThemeOption[]>();
+  totalBlocks = input.required<number>();
   completed = output<BlockSurveyResult>();
+
+  texts = inject(ConfigService).texts;
+  fmt = fmt;
 
   step = signal<1 | 2>(1);
   shuffledThemes = signal<ThemeOption[]>([]);

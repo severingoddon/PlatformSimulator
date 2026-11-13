@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PID_PATTERN, UserSessionService } from '../../services/user-session.service';
+import { ConfigService } from '../../services/config.service';
 
 /**
  * Entry point. Participants arrive via a link like  https://<host>/?pid=<id>
@@ -18,6 +19,7 @@ export class StartComponent implements OnInit {
   private router = inject(Router);
   private session = inject(UserSessionService);
 
+  texts = inject(ConfigService).texts;
   missingPid = signal(false);
 
   ngOnInit() {

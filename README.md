@@ -32,6 +32,8 @@ Then apply the change:
 docker compose up -d
 ```
 
+The language of the tool is set in the same file (`LANGUAGE: "en"`, English by default; see [Texts and language](#texts-and-language)).
+
 **3. Get the results**
 
 All results are written as CSV files to the `data/` folder next to `docker-compose.yml`. You can copy them from there at any time, even while the tool is running.
@@ -44,7 +46,19 @@ docker compose down
 
 Stopping, restarting or updating the tool does **not** delete anything in `data/`.
 
-**Update after changes to the code, images or `block_config.json`:**
+**After editing texts** (`backend/texts/*.json`):
+
+```bash
+docker compose restart
+```
+
+**After editing `docker-compose.yml`:**
+
+```bash
+docker compose up -d
+```
+
+**After changes to the code, images or `block_config.json`:**
 
 ```bash
 git pull
@@ -134,16 +148,47 @@ If you change the themes in `block_config.json` after data has already been reco
 
 Note: if a participant reloads the page in the middle, the feed starts again at block 1 (with the same `pid`). Their block answers may then appear twice in the CSV files; use the latest timestamp per `pid` and block.
 
+## Texts and language
+
+Every text participants see (buttons, questions, theme names, messages) is in **one file per language** in `backend/texts/`:
+
+| File | Language |
+|------|----------|
+| `en.json` | English (default) |
+| `de.json` | German |
+
+**Change a wording:** open the file of the language you use (e.g. `backend/texts/en.json`), change the text between the quotes, save, and run `docker compose restart`. Example:
+
+```json
+"recognitionTitle": "Which topics did you notice in the last {count} posts?",
+```
+
+Rules:
+
+- Only change the text on the **right** side of the colon. The names on the left (e.g. `"recognitionTitle"`) must stay as they are.
+- Words in curly braces like `{count}`, `{block}`, `{total}`, `{number}`, `{name}` are filled in automatically by the tool. Keep them in the text (you can move them around).
+- The theme names shown in the questions are under `"themes"`.
+
+**Switch the language:** set `LANGUAGE` in `docker-compose.yml` to the file name without `.json` (e.g. `"de"`), then run `docker compose up -d`.
+
+**Add a language:** copy `en.json` to e.g. `es.json`, translate all texts on the right side, set `LANGUAGE: "es"`, and run `docker compose up -d`.
+
+If a text file has a mistake (missing text, missing comma or quote), the tool does not start and shows a message telling you what is wrong. See it with:
+
+```bash
+docker compose logs
+```
+
 ## Configuration
 
-Everything about the content is controlled by `backend/block_config.json`:
+The study content is controlled by `backend/block_config.json`:
 
-- **themes** – themes offered in the questions after each block (key + label). The questions and the CSV columns adapt automatically.
+- **themes** – the theme keys offered in the questions after each block. The questions and the CSV columns adapt automatically. Each theme also needs a display name under `"themes"` in every text file (see above).
 - **blocks** – 10 blocks with 5 posts each. Per post: file name, type (`explicit_religion`, `spiritual_implicit`, `filler`, `thematic_control`) and ground-truth themes.
 
 Post images are stored in `postImages/`.
 
-After changing the configuration or images, rebuild with `docker compose up -d --build`.
+After changing `block_config.json` or images, rebuild with `docker compose up -d --build`.
 
 ## Local development (without Docker)
 

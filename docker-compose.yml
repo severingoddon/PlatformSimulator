@@ -8,7 +8,12 @@ services:
       # Qualtrics survey. "?pid=<participant id>" is added automatically.
       # Leave empty ("") to show a simple thank-you page instead.
       RETURN_URL: ""
+      # Language of all texts participants see: "en" or "de"
+      # (= file name in backend/texts/, e.g. "de" uses backend/texts/de.json)
+      LANGUAGE: "en"
     volumes:
       # Study results (CSV files) are written here on the host machine
       - ./data:/app/backend/data
+      # Participant-facing texts: edit these files, then run "docker compose restart"
+      - ./backend/texts:/app/backend/texts:ro
     restart: unless-stopped

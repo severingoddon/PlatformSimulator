@@ -1,0 +1,64 @@
+{
+  "language": "en",
+
+  "themes": {
+    "lifestyle": "Lifestyle",
+    "health": "Health",
+    "motivation": "Motivation",
+    "politics": "Politics",
+    "relationships": "Relationships",
+    "spirituality": "Spirituality",
+    "religion": "Religion",
+    "belongingCommunity": "Belonging / Community",
+    "other": "Other"
+  },
+
+  "feed": {
+    "continueButton": "Quick question",
+    "notifications": "Notifications",
+    "messenger": "Messenger",
+    "home": "Home",
+    "search": "Search",
+    "reels": "Reels",
+    "create": "Create",
+    "profile": "Profile"
+  },
+
+  "post": {
+    "follow": "Follow",
+    "following": "Following",
+    "moreOptions": "More options",
+    "like": "Like",
+    "unlike": "Unlike",
+    "comment": "Comment",
+    "share": "Share",
+    "shared": "Shared",
+    "save": "Save",
+    "unsave": "Remove from saved",
+    "likes": "{count} likes",
+    "caption": "Beautiful day today",
+    "imageAlt": "Post by {name}",
+    "timestamps": ["1h", "2h", "3h", "5h", "8h", "12h", "1d", "2d", "3d"]
+  },
+
+  "survey": {
+    "progress": "Block {block} of {total}",
+    "recognitionTitle": "Which topics did you notice in the last {count} posts?",
+    "recognitionSubtitle": "Select all that apply",
+    "localizationTitle": "In which posts did you notice these topics?",
+    "localizationSubtitle": "Select all posts that apply",
+    "postLabel": "Post {number}",
+    "next": "Next"
+  },
+
+  "invalidLink": {
+    "title": "Invalid link",
+    "message": "Please open this page using the link in the survey you are taking part in."
+  },
+
+  "thankYou": {
+    "title": "Thank you!",
+    "message": "You have completed this study. Thank you for your time and your answers.",
+    "subMessage": "You can close this window now."
+  }
+}

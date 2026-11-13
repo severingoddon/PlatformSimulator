@@ -1,0 +1,64 @@
+{
+  "language": "de",
+
+  "themes": {
+    "lifestyle": "Lifestyle",
+    "health": "Gesundheit",
+    "motivation": "Motivation",
+    "politics": "Politik",
+    "relationships": "Beziehungen",
+    "spirituality": "Spiritualität",
+    "religion": "Religion",
+    "belongingCommunity": "Zugehörigkeit / Gemeinschaft",
+    "other": "Anderes"
+  },
+
+  "feed": {
+    "continueButton": "Kurze Zwischenfrage",
+    "notifications": "Benachrichtigungen",
+    "messenger": "Messenger",
+    "home": "Startseite",
+    "search": "Suchen",
+    "reels": "Reels",
+    "create": "Erstellen",
+    "profile": "Profil"
+  },
+
+  "post": {
+    "follow": "Folgen",
+    "following": "Gefolgt",
+    "moreOptions": "Weitere Optionen",
+    "like": "Gefällt mir",
+    "unlike": "Gefällt mir nicht mehr",
+    "comment": "Kommentar",
+    "share": "Teilen",
+    "shared": "Geteilt",
+    "save": "Speichern",
+    "unsave": "Nicht mehr speichern",
+    "likes": "Gefällt {count} Mal",
+    "caption": "Schöner Tag heute",
+    "imageAlt": "Post von {name}",
+    "timestamps": ["1 Std.", "2 Std.", "3 Std.", "5 Std.", "8 Std.", "12 Std.", "1 T.", "2 T.", "3 T."]
+  },
+
+  "survey": {
+    "progress": "Block {block} von {total}",
+    "recognitionTitle": "Welche Themen hast du in den letzten {count} Beiträgen bemerkt?",
+    "recognitionSubtitle": "Mehrfachauswahl möglich",
+    "localizationTitle": "In welchen Beiträgen hast du diese Themen bemerkt?",
+    "localizationSubtitle": "Wähle alle zutreffenden Beiträge aus",
+    "postLabel": "Beitrag {number}",
+    "next": "Weiter"
+  },
+
+  "invalidLink": {
+    "title": "Ungültiger Link",
+    "message": "Bitte öffne diese Seite über den Link in der Umfrage, an der du teilnimmst."
+  },
+
+  "thankYou": {
+    "title": "Vielen Dank!",
+    "message": "Deine Teilnahme an dieser Studie ist abgeschlossen. Vielen Dank für deine Zeit und deine wertvollen Antworten.",
+    "subMessage": "Du kannst dieses Fenster jetzt schliessen."
+  }
+}

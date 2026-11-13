@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PostsResponse, PostFeedback, BlockSurveyPayload } from '../models/post.model';
+import { Texts } from '../models/texts.model';
 
 export interface ThemeConfig {
   key: string;
@@ -12,6 +13,7 @@ export interface AppConfig {
   themes: ThemeConfig[];
   /** Where participants are sent after the last block (empty = show thank-you page). */
   returnUrl: string;
+  texts: Texts;
 }
 
 @Injectable({ providedIn: 'root' })

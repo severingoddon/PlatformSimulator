@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { ConfigService } from '../../services/config.service';
 
 @Component({
   selector: 'app-thank-you',
@@ -6,4 +7,6 @@ import { Component } from '@angular/core';
   templateUrl: './thank-you.component.html',
   styleUrl: './thank-you.component.scss',
 })
-export class ThankYouComponent {}
+export class ThankYouComponent {
+  texts = inject(ConfigService).texts;
+}

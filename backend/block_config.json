@@ -1,14 +1,14 @@
 {
   "themes": [
-    {"key": "lifestyle", "label": "Lifestyle"},
-    {"key": "health", "label": "Gesundheit"},
-    {"key": "motivation", "label": "Motivation"},
-    {"key": "politics", "label": "Politik"},
-    {"key": "relationships", "label": "Beziehungen"},
-    {"key": "spirituality", "label": "Spiritualität"},
-    {"key": "religion", "label": "Religion"},
-    {"key": "belongingCommunity", "label": "Zugehörigkeit / Gemeinschaft"},
-    {"key": "other", "label": "Anderes"}
+    "lifestyle",
+    "health",
+    "motivation",
+    "politics",
+    "relationships",
+    "spirituality",
+    "religion",
+    "belongingCommunity",
+    "other"
   ],
   "blocks": [
     {

@@ -3,17 +3,17 @@
 
     <!-- Progress -->
     <div class="survey-progress">
-      <span class="block-label">Block {{ blockNumber() }} von 10</span>
+      <span class="block-label">{{ fmt(texts.survey.progress, { block: blockNumber(), total: totalBlocks() }) }}</span>
       <div class="progress-bar">
-        <div class="progress-fill" [style.width.%]="blockNumber() * 10"></div>
+        <div class="progress-fill" [style.width.%]="blockNumber() / totalBlocks() * 100"></div>
       </div>
     </div>
 
     <!-- Step 1: Theme Recognition -->
     @if (step() === 1) {
       <div class="survey-step">
-        <h2 class="survey-title">Welche Themen hast du in den letzten 5 Beiträgen bemerkt?</h2>
-        <p class="survey-subtitle">Mehrfachauswahl möglich</p>
+        <h2 class="survey-title">{{ fmt(texts.survey.recognitionTitle, { count: blockPosts().length }) }}</h2>
+        <p class="survey-subtitle">{{ texts.survey.recognitionSubtitle }}</p>
 
         <div class="theme-grid">
           @for (theme of shuffledThemes(); track theme.key) {
@@ -30,7 +30,7 @@
           class="survey-btn primary"
           [disabled]="!hasSelection()"
           (click)="proceedToLocalization()">
-          Weiter
+          {{ texts.survey.next }}
         </button>
       </div>
     }
@@ -38,8 +38,8 @@
     <!-- Step 2: Theme Localization -->
     @if (step() === 2) {
       <div class="survey-step">
-        <h2 class="survey-title">In welchen Beiträgen hast du diese Themen bemerkt?</h2>
-        <p class="survey-subtitle">Wähle alle zutreffenden Beiträge aus</p>
+        <h2 class="survey-title">{{ texts.survey.localizationTitle }}</h2>
+        <p class="survey-subtitle">{{ texts.survey.localizationSubtitle }}</p>
 
         @for (theme of themesToLocalize(); track theme.key) {
           <div class="localization-section">
@@ -50,8 +50,8 @@
                   class="thumbnail-btn"
                   [class.selected]="isLocalized(theme.key, i)"
                   (click)="toggleLocalization(theme.key, i)">
-                  <img [src]="post.imageUrl" [alt]="'Beitrag ' + (i + 1)">
-                  <span class="thumb-label">Beitrag {{ i + 1 }}</span>
+                  <img [src]="post.imageUrl" [alt]="fmt(texts.survey.postLabel, { number: i + 1 })">
+                  <span class="thumb-label">{{ fmt(texts.survey.postLabel, { number: i + 1 }) }}</span>
                   @if (isLocalized(theme.key, i)) {
                     <div class="thumb-check">
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -69,7 +69,7 @@
         <button
           class="survey-btn primary"
           (click)="submitSurvey()">
-          Weiter
+          {{ texts.survey.next }}
         </button>
       </div>
     }
