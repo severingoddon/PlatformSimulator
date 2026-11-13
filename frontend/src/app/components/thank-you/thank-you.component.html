@@ -8,6 +8,10 @@
     </div>
     <h1 class="title">{{ texts.thankYou.title }}</h1>
     <p class="message">{{ texts.thankYou.message }}</p>
-    <p class="sub-message">{{ texts.thankYou.subMessage }}</p>
+    @if (canGoBack()) {
+      <button class="back-btn" (click)="backToSurvey()">{{ texts.thankYou.backButton }}</button>
+    } @else {
+      <p class="sub-message">{{ texts.thankYou.tabHint }}</p>
+    }
   </div>
 </div>

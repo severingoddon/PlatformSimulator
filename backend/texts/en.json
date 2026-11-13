@@ -67,6 +67,7 @@
   "thankYou": {
     "title": "Thank you!",
     "message": "You have finished this part of the study. Please go back to the survey and enter this code to continue: 73914",
-    "subMessage": "To go back, use your browser's back button or switch to the tab with the survey."
+    "backButton": "Back to the survey",
+    "tabHint": "Please switch back to the tab with the survey."
   }
 }
