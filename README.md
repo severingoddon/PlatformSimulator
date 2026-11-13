@@ -11,7 +11,7 @@ The tool is designed to be used **together with a survey tool such as Qualtrics*
 **1. Start the tool**
 
 ```bash
-git clone <repository-url> PlatformSimulator
+git clone https://github.com/severingoddon/PlatformSimulator.git
 cd PlatformSimulator
 docker compose up -d --build
 ```
