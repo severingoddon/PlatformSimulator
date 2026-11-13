@@ -167,9 +167,10 @@ If you change the themes in `block_config.json` after data has already been reco
 ## Study flow (inside the tool)
 
 1. The participant arrives via the link from Qualtrics.
-2. The feed shows 5 posts per block with Instagram-style buttons (like, follow, save, share).
-3. After each block: which themes did you notice? → in which posts?
-4. After the last block: end page with the completion code (or automatic redirect, if `RETURN_URL` is set).
+2. A short welcome screen explains what to do (text under `"intro"` in the text files).
+3. The feed shows 5 posts per block with Instagram-style buttons (like, follow, save, share).
+4. After each block: which themes did you notice? → in which posts?
+5. After the last block: end page with the completion code (or automatic redirect, if `RETURN_URL` is set).
 
 Note: if a participant reloads the page in the middle, the feed starts again at block 1 (with the same `pid`). Their block answers may then appear twice in the CSV files; use the latest timestamp per `pid` and block.
 

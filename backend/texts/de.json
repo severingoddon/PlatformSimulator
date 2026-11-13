@@ -13,6 +13,13 @@
     "other": "Anderes"
   },
 
+  "intro": {
+    "title": "Willkommen!",
+    "message": "Gleich siehst du einen kurzen Social-Media-Feed. Scrolle durch und schau dir die Beiträge an, so wie du es sonst auch tun würdest. Du kannst Beiträge liken, folgen, speichern oder teilen, wenn du möchtest.",
+    "subMessage": "Nach jeweils einigen Beiträgen stellen wir dir ein paar kurze Fragen.",
+    "startButton": "Los geht's"
+  },
+
   "feed": {
     "continueButton": "Kurze Zwischenfrage",
     "notifications": "Benachrichtigungen",

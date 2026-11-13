@@ -5,6 +5,12 @@
 export interface Texts {
   language: string;
   themes: Record<string, string>;
+  intro: {
+    title: string;
+    message: string;
+    subMessage: string;
+    startButton: string;
+  };
   feed: {
     continueButton: string;
     notifications: string;

@@ -18,6 +18,18 @@
   </div>
 </nav>
 
+<!-- Short instructions before the feed starts -->
+@if (feedState() === 'intro') {
+  <main class="intro">
+    <div class="intro-card">
+      <h1 class="intro-title">{{ texts.intro.title }}</h1>
+      <p class="intro-message">{{ texts.intro.message }}</p>
+      <p class="intro-sub">{{ texts.intro.subMessage }}</p>
+      <button class="intro-btn" (click)="startFeed()">{{ texts.intro.startButton }}</button>
+    </div>
+  </main>
+}
+
 <!-- Feed Content -->
 @if (feedState() === 'viewing') {
   <main class="feed-container">

@@ -13,6 +13,13 @@
     "other": "Other"
   },
 
+  "intro": {
+    "title": "Welcome!",
+    "message": "On the next screen you will see a short social media feed. Please scroll through it and look at the posts as you normally would. You can like, follow, save or share posts if you want to.",
+    "subMessage": "After every few posts, we will ask you a few short questions.",
+    "startButton": "Start"
+  },
+
   "feed": {
     "continueButton": "Quick question",
     "notifications": "Notifications",

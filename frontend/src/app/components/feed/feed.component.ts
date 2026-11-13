@@ -9,7 +9,7 @@ import { PostCardComponent } from '../post-card/post-card.component';
 import { BlockSurveyComponent, BlockSurveyResult } from '../block-survey/block-survey.component';
 import { newRequestId } from '../../utils/id.util';
 
-type FeedState = 'viewing' | 'survey' | 'completed';
+type FeedState = 'intro' | 'viewing' | 'survey' | 'completed';
 
 @Component({
   selector: 'app-feed',
@@ -29,7 +29,7 @@ export class FeedComponent implements OnInit {
 
   allPosts = signal<PostData[]>([]);
   currentBlock = signal(1);
-  feedState = signal<FeedState>('viewing');
+  feedState = signal<FeedState>('intro');
   totalBlocks = 0;
 
   currentBlockPosts = computed(() => {
@@ -49,6 +49,11 @@ export class FeedComponent implements OnInit {
       const maxBlock = Math.max(...response.posts.map(p => p.blockNumber), 0);
       this.totalBlocks = maxBlock;
     });
+  }
+
+  startFeed() {
+    this.feedState.set('viewing');
+    window.scrollTo({ top: 0 });
   }
 
   onBlockScrollEnd() {
