@@ -2,7 +2,7 @@
 
 A simulated Instagram-style feed for research studies. Participants scroll through 50 posts (10 blocks of 5), can like / follow / save / share them, and answer a short question after each block.
 
-The tool is designed to be used **together with a survey tool such as Qualtrics**: participants start in Qualtrics, are sent to this tool via a link, and are sent back to Qualtrics at the end. Demographics and consent are collected in Qualtrics, not here. This tool only records what participants do in the feed, linked to their Qualtrics ID.
+The tool is designed to be used **together with a survey tool such as Qualtrics**: somewhere in the Qualtrics survey, participants open this tool via a link, do the feed, and then continue the survey. Demographics and consent are collected in Qualtrics, not here. This tool only records what participants do in the feed, linked to their Qualtrics ID.
 
 ## Setup
 
@@ -18,21 +18,9 @@ docker compose up -d --build
 
 The tool is now running at `http://<your-server>:3005`.
 
-**2. Set the return link** (where participants go when they are done)
+**2. Connect your Qualtrics survey**
 
-Open `docker-compose.yml` and enter the link of your follow-up Qualtrics survey:
-
-```yaml
-RETURN_URL: "https://stanford.qualtrics.com/jfe/form/SV_xxxxxxxxxxxx"
-```
-
-Then apply the change:
-
-```bash
-docker compose up -d
-```
-
-The language of the tool is set in the same file (`LANGUAGE: "en"`, English by default; see [Texts and language](#texts-and-language)).
+See [Connecting Qualtrics](#connecting-qualtrics) below (about 10 minutes in Qualtrics, nothing to change in this tool).
 
 **3. Get the results**
 
@@ -70,60 +58,75 @@ docker compose up -d --build
 - The tool serves plain HTTP on port 3005. Participants should reach it via **HTTPS** (e.g. `https://feed.your-lab.stanford.edu`). Ask your IT to put it behind their HTTPS reverse proxy / web server and forward to port 3005.
 - The tool restarts automatically after a crash or server reboot.
 - Back up the `data/` folder regularly. It contains all results.
-- Do one complete test run yourself (Qualtrics → tool → back to Qualtrics) and check that your ID shows up in all CSV files and in Qualtrics.
+- Change the completion code if you like (see [Connecting Qualtrics](#connecting-qualtrics), step 2).
+- Do one complete test run yourself (Qualtrics → tool → back to Qualtrics) and check that your Response ID shows up in all CSV files.
 
 ## Connecting Qualtrics
 
-Participants are identified by a **participant ID (`pid`)** that Qualtrics puts into the link. This ID is stored in every row of the CSV files, so afterwards you can match the feed data to the Qualtrics answers.
+Participants are identified by a **participant ID (`pid`)** that Qualtrics puts into the link to this tool. The tool stores this ID in every row of its CSV files, so afterwards you can match the feed data to the Qualtrics answers.
+
+How it works for participants:
 
 ```
-Qualtrics survey 1            This tool                    Qualtrics survey 2
-(consent, demographics)  →    (feed + block questions)  →  (follow-up, debriefing)
-      sends pid ─────────────→ stores pid ────────────────→ receives pid
+Qualtrics survey (tab 1)                 This tool (tab 2)
+─────────────────────────                ─────────────────
+consent, demographics, …
+page with link + code field  ── link ──→  feed + questions (10 blocks)
+                                          end page shows a code
+enter code, continue  ←── go back to tab 1 ──┘
+rest of the survey
 ```
 
-### Step 1: Link from Qualtrics to the tool
+### Step 1: Add the link to the tool
 
-At the end of your first Qualtrics survey, send participants to the tool with this link (replace the host with your own):
+In your Qualtrics survey, at the point where participants should do the feed, add a **Text / Graphic** question with an instruction and the link. To make the link open in a **new tab**, edit the question text in the **HTML View** and paste:
 
-```
-https://<your-server>/?pid=${e://Field/ResponseID}
-```
-
-`${e://Field/ResponseID}` is a Qualtrics placeholder. Qualtrics replaces it automatically with each participant's unique Response ID (e.g. `R_3kT9xZp2LmQ8vWd`).
-
-Easiest way: **Survey flow → End of Survey element → Customize → "Redirect to a URL"** and paste the link above. Alternatively, put it as a link into the last question text.
-
-> Recruiting via Prolific? You can use `?pid={{%PROLIFIC_PID%}}` in the Prolific study link instead. Any ID made of letters, digits, `_` and `-` works.
-
-If someone opens the tool **without** a `pid`, they see an "invalid link" message and no data is recorded.
-
-### Step 2: Link from the tool back to Qualtrics
-
-When participants finish the last block, the tool automatically sends them to `RETURN_URL` (see Setup step 2) and adds their ID:
-
-```
-https://stanford.qualtrics.com/jfe/form/SV_xxxxxxxxxxxx?pid=R_3kT9xZp2LmQ8vWd
+```html
+<p>Please click the link below. It opens in a new tab. When you are done, come back to this tab and enter the code you were shown.</p>
+<p><a href="https://<your-server>/?pid=${e://Field/ResponseID}" target="_blank">Open the feed</a></p>
 ```
 
-To store this ID in your second Qualtrics survey: **Survey flow → Add a New Element Here → Embedded Data**, create a field named exactly `pid`, and move this element to the **top** of the survey flow. Qualtrics then saves the ID from the link with each response.
+Replace `<your-server>` with the address of the tool. Leave `${e://Field/ResponseID}` exactly as it is: Qualtrics replaces it automatically with each participant's unique Response ID (e.g. `R_3kT9xZp2LmQ8vWd`).
 
-If `RETURN_URL` is left empty, participants see a simple thank-you page instead.
+If someone opens the tool **without** a `pid` (e.g. by typing the address by hand), they see an "invalid link" message and no data is recorded.
 
-### Step 3: Combine the data
+### Step 2: Add the code question
+
+On the **same page**, below the link, add a **Text Entry** question, e.g. "Please enter the code from the end of the feed:".
+
+Then: **Validation → Custom validation**, condition **"[this question] Is Equal to 73914"**, and an error message such as "This code is not correct. Please complete the feed first." Participants can only continue once they enter the correct code.
+
+The code is shown on the tool's end page. The default is `73914`. To change it, edit the `"thankYou"` → `"message"` text in `backend/texts/en.json` (see [Texts and language](#texts-and-language)), run `docker compose restart`, and use the same code in the Qualtrics validation. Numbers work best (no confusion about upper/lower case).
+
+The code is the same for everybody, so it only serves as a reminder and a simple gate. The reliable check is step 3.
+
+### Step 3: Combine the data and check completion
 
 After data collection you have:
 
-- the Qualtrics export (column `ResponseID` from survey 1, column `pid` from survey 2)
-- the CSV files from this tool (column `pid`)
+- the Qualtrics export (column `ResponseID`)
+- the CSV files from this tool (column `pid`, which contains the same Response ID)
 
-Match them on this ID. Example in R:
+**Check who really completed the feed:** a participant completed it if `theme_recognition.csv` contains block 10 for their ID. Exclude everyone else (e.g. someone who got the code from another participant). Example in R:
 
 ```r
-qualtrics  <- read.csv("qualtrics_export.csv")
-engagement <- read.csv("data/engagement.csv")
-combined   <- merge(qualtrics, engagement, by.x = "ResponseID", by.y = "pid")
+qualtrics   <- read.csv("qualtrics_export.csv")
+recognition <- read.csv("data/theme_recognition.csv")
+engagement  <- read.csv("data/engagement.csv")
+
+# Response IDs that finished all 10 blocks of the feed
+completed <- unique(recognition$pid[recognition$blockNumber == 10])
+qualtrics$feed_completed <- qualtrics$ResponseID %in% completed
+
+# Combine Qualtrics answers with feed data (one row per post interaction)
+combined <- merge(qualtrics, engagement, by.x = "ResponseID", by.y = "pid")
 ```
+
+### Alternative setup: automatic return
+
+Instead of a second tab and a code, the tool can send participants back automatically: set `RETURN_URL` in `docker-compose.yml` to your survey link and run `docker compose up -d`. At the end of the feed, participants are redirected there, with `?pid=<their ID>` added.
+
+For this to continue the **same** response, enable **Survey options → "Allow respondents to finish later"** in Qualtrics. Qualtrics then uses a browser cookie to resume where the participant left. This fails if participants use private browsing, block cookies or switch devices. They then start the survey from the beginning. The recommended setup above does not have this problem.
 
 ## Output data
 
@@ -144,7 +147,7 @@ If you change the themes in `block_config.json` after data has already been reco
 1. The participant arrives via the link from Qualtrics.
 2. The feed shows 5 posts per block with Instagram-style buttons (like, follow, save, share).
 3. After each block: which themes did you notice? → in which posts?
-4. After block 10: automatic redirect back to Qualtrics.
+4. After block 10: end page with the completion code (or automatic redirect, if `RETURN_URL` is set).
 
 Note: if a participant reloads the page in the middle, the feed starts again at block 1 (with the same `pid`). Their block answers may then appear twice in the CSV files; use the latest timestamp per `pid` and block.
 

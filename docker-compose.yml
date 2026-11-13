@@ -4,9 +4,10 @@ services:
     ports:
       - "3005:3005"
     environment:
-      # Where participants are sent after finishing the feed, e.g. your follow-up
-      # Qualtrics survey. "?pid=<participant id>" is added automatically.
-      # Leave empty ("") to show a simple thank-you page instead.
+      # Leave empty (recommended): participants see the end page with the
+      # completion code (text in backend/texts/<language>.json, "thankYou").
+      # Optional: a link to send participants to automatically instead,
+      # "?pid=<participant id>" is added (see README, "Alternative setup").
       RETURN_URL: ""
       # Language of all texts participants see: "en" or "de"
       # (= file name in backend/texts/, e.g. "de" uses backend/texts/de.json)

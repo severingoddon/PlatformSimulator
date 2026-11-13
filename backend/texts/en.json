@@ -58,7 +58,7 @@
 
   "thankYou": {
     "title": "Thank you!",
-    "message": "You have completed this study. Thank you for your time and your answers.",
-    "subMessage": "You can close this window now."
+    "message": "You have finished this part of the study. Please go back to the survey tab and enter this code to continue: 73914",
+    "subMessage": "You can close this tab afterwards."
   }
 }

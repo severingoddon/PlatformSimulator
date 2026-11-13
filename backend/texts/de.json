@@ -58,7 +58,7 @@
 
   "thankYou": {
     "title": "Vielen Dank!",
-    "message": "Deine Teilnahme an dieser Studie ist abgeschlossen. Vielen Dank für deine Zeit und deine wertvollen Antworten.",
-    "subMessage": "Du kannst dieses Fenster jetzt schliessen."
+    "message": "Du hast diesen Teil der Studie abgeschlossen. Bitte kehre zum Tab mit der Umfrage zurück und gib diesen Code ein, um fortzufahren: 73914",
+    "subMessage": "Danach kannst du diesen Tab schliessen."
   }
 }
