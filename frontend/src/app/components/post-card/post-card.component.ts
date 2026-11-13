@@ -1,9 +1,9 @@
-import { Component, input, signal, inject } from '@angular/core';
+import { Component, input, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EngagementAction, PostData } from '../../models/post.model';
 import { newRequestId } from '../../utils/id.util';
 import { UserSessionService } from '../../services/user-session.service';
-import { ApiService } from '../../services/api.service';
+import { ApiService, PostState } from '../../services/api.service';
 import { ConfigService } from '../../services/config.service';
 import { fmt } from '../../models/texts.model';
 
@@ -14,8 +14,10 @@ import { fmt } from '../../models/texts.model';
   templateUrl: './post-card.component.html',
   styleUrl: './post-card.component.scss',
 })
-export class PostCardComponent {
+export class PostCardComponent implements OnInit {
   post = input.required<PostData>();
+  /** Clicks from before an interruption, so the buttons look as the participant left them */
+  initialState = input<PostState | undefined>(undefined);
 
   private session = inject(UserSessionService);
   private api = inject(ApiService);
@@ -27,6 +29,16 @@ export class PostCardComponent {
   saved = signal(false);
   shared = signal(false);
   imageLoaded = signal(false);
+
+  ngOnInit() {
+    const state = this.initialState();
+    if (state) {
+      this.liked.set(!!state.like);
+      this.followed.set(!!state.follow);
+      this.saved.set(!!state.save);
+      this.shared.set(!!state.share);
+    }
+  }
 
   getTimestamp(): string {
     const name = this.post().profileName;

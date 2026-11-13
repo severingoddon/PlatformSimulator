@@ -81,6 +81,9 @@ seen_ids: set[str] = set()
 # pid -> blocks whose survey is answered / highest block whose feed was shown
 completed_blocks: dict[str, set[int]] = {}
 shown_block: dict[str, int] = {}
+# pid -> postId -> current state of the buttons, e.g. {"like": True, "save": False}
+# (rebuilt from engagement.csv, used to show earlier clicks again after an interruption)
+post_states: dict[str, dict[str, dict[str, bool]]] = {}
 instance_lock_file = None
 
 block_config: list[list[dict]] = []
@@ -181,8 +184,18 @@ def load_seen_ids():
                 seen_ids.update(row[column] for row in csv.DictReader(f) if row.get(column))
 
 
+def apply_engagement(pid: str, post_id: str, action: str):
+    """Update the current button state of a post from one click (like / unlike / ...)."""
+    button = action.removeprefix("un")
+    post_states.setdefault(pid, {}).setdefault(post_id, {})[button] = not action.startswith("un")
+
+
 def load_progress():
     """Rebuild every participant's progress from the files on disk."""
+    if ENGAGEMENT_CSV.exists():
+        with open(ENGAGEMENT_CSV, newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):  # rows are in the order the clicks happened
+                apply_engagement(row["pid"], row["postId"], row["action"])
     if RECOGNITION_CSV.exists():
         with open(RECOGNITION_CSV, newline="", encoding="utf-8") as f:
             for row in csv.DictReader(f):
@@ -295,13 +308,15 @@ async def get_config():
 
 @app.get("/api/progress")
 def get_progress(pid: str):
-    """Where this participant stands: answered blocks and the last block shown."""
+    """Where this participant stands: answered blocks, the last block shown and
+    the current like / follow / save / share state of the posts they clicked on."""
     if not PID_PATTERN.fullmatch(pid):
         raise HTTPException(422, "invalid pid")
     with csv_lock:
         return {
             "completedBlocks": sorted(completed_blocks.get(pid, set())),
             "shownBlock": shown_block.get(pid, 0),
+            "postStates": {post: dict(state) for post, state in post_states.get(pid, {}).items()},
         }
 
 
@@ -357,6 +372,7 @@ def submit_engagement(event: EngagementEvent):
         if event.eventId not in seen_ids:
             append_rows(ENGAGEMENT_CSV, ENGAGEMENT_COLUMNS, [row])
             seen_ids.add(event.eventId)
+            apply_engagement(event.pid, event.postId, event.action)
     return {"success": True}
 
 

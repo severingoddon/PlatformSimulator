@@ -37,6 +37,15 @@ function retryOnNetworkError<T>() {
 export interface Progress {
   completedBlocks: number[];
   shownBlock: number;
+  /** Current button state per post, e.g. { "03_spiritual": { like: true } } */
+  postStates: Record<string, PostState>;
+}
+
+export interface PostState {
+  like?: boolean;
+  follow?: boolean;
+  save?: boolean;
+  share?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ApiService } from '../../services/api.service';
+import { ApiService, PostState } from '../../services/api.service';
 import { ConfigService } from '../../services/config.service';
 import { UserSessionService } from '../../services/user-session.service';
 import { PostData, BlockSurveyPayload } from '../../models/post.model';
@@ -39,6 +39,8 @@ export class FeedComponent implements OnInit {
   });
 
   showContinueButton = signal(false);
+  /** Button states from before an interruption (empty on a first visit) */
+  postStates: Record<string, PostState> = {};
   saving = signal(false);
   saveFailed = signal(false);
   /** One ID per block survey; reused if the participant has to click "Next" again after an error. */
@@ -49,6 +51,7 @@ export class FeedComponent implements OnInit {
     // Load the posts and where this participant stands, then continue from there
     forkJoin({ posts: this.api.getPosts(), progress: this.api.getProgress(pid) }).subscribe({
       next: ({ posts, progress }) => {
+        this.postStates = progress.postStates ?? {};
         this.allPosts.set(posts.posts);
         this.totalBlocks = Math.max(...posts.posts.map(p => p.blockNumber), 0);
         const done = new Set(progress.completedBlocks);

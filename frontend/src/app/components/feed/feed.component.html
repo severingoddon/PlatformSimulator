@@ -45,7 +45,7 @@
 @if (feedState() === 'viewing') {
   <main class="feed-container">
     @for (post of currentBlockPosts(); track post.postId) {
-      <app-post-card [post]="post" />
+      <app-post-card [post]="post" [initialState]="postStates[post.postId]" />
     }
 
     <!-- Continue to survey button after last post -->
