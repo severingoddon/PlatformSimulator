@@ -1,0 +1,11 @@
+.git
+.idea
+**/.venv
+**/__pycache__
+**/node_modules
+frontend/dist
+frontend/.angular
+backend/data
+data
+instaExample.html
+task.md

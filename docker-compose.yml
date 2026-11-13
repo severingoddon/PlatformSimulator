@@ -1,0 +1,9 @@
+services:
+  platform:
+    build: .
+    ports:
+      - "3005:3005"
+    volumes:
+      # Study results (CSV files) are written here on the host machine
+      - ./data:/app/backend/data
+    restart: unless-stopped

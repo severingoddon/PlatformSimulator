@@ -19,3 +19,6 @@ backend/data/
 .DS_Store
 /frontend/.vscode/
 /frontend/.angular/
+
+# Docker data volume
+/data/
