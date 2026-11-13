@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from models import BlockSurveySubmission, EngagementEvent, PostData, PostsResponse
+from models import BlockShown, BlockSurveySubmission, EngagementEvent, PostData, PostsResponse, PID_PATTERN
 
 try:
     import fcntl  # Linux / macOS (the Docker container is Linux)
@@ -40,6 +40,8 @@ ENGAGEMENT_COLUMNS = [
     "timestamp", "pid", "blockNumber", "postId", "postPosition", "action", "eventId",
 ]
 
+PROGRESS_COLUMNS = ["timestamp", "pid", "blockNumber"]
+
 LOCALIZATION_COLUMNS = [
     "timestamp", "pid", "blockNumber", "theme",
     "post1", "post2", "post3", "post4", "post5", "submissionId",
@@ -61,6 +63,9 @@ DATA_DIR = BASE_DIR / "data"
 ENGAGEMENT_CSV = DATA_DIR / "engagement.csv"
 RECOGNITION_CSV = DATA_DIR / "theme_recognition.csv"
 LOCALIZATION_CSV = DATA_DIR / "theme_localization.csv"
+# Which block each participant has reached, so the feed continues where they left off
+# after a reload or interruption. Internal bookkeeping, not needed for the analysis.
+PROGRESS_CSV = DATA_DIR / "progress.csv"
 CONFIG_PATH = BASE_DIR / "block_config.json"
 TEXTS_DIR = BASE_DIR / "texts"
 REFERENCE_TEXTS = TEXTS_DIR / "en.json"
@@ -73,6 +78,9 @@ FRONTEND_DIR = BASE_DIR.parent / "frontend" / "dist" / "frontend" / "browser"
 csv_lock = threading.Lock()
 # IDs of events / survey submissions already written (to ignore retried duplicates)
 seen_ids: set[str] = set()
+# pid -> blocks whose survey is answered / highest block whose feed was shown
+completed_blocks: dict[str, set[int]] = {}
+shown_block: dict[str, int] = {}
 instance_lock_file = None
 
 block_config: list[list[dict]] = []
@@ -173,6 +181,18 @@ def load_seen_ids():
                 seen_ids.update(row[column] for row in csv.DictReader(f) if row.get(column))
 
 
+def load_progress():
+    """Rebuild every participant's progress from the files on disk."""
+    if RECOGNITION_CSV.exists():
+        with open(RECOGNITION_CSV, newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                completed_blocks.setdefault(row["pid"], set()).add(int(row["blockNumber"]))
+    if PROGRESS_CSV.exists():
+        with open(PROGRESS_CSV, newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                shown_block[row["pid"]] = max(shown_block.get(row["pid"], 0), int(row["blockNumber"]))
+
+
 def append_rows(path: Path, columns: list[str], rows: list[dict]):
     """Append rows to a CSV file and force them onto the disk.
     Must be called while holding csv_lock. Files are only ever appended to, never
@@ -208,7 +228,9 @@ acquire_instance_lock()
 archive_if_columns_changed(ENGAGEMENT_CSV, ENGAGEMENT_COLUMNS)
 archive_if_columns_changed(RECOGNITION_CSV, recognition_columns)
 archive_if_columns_changed(LOCALIZATION_CSV, LOCALIZATION_COLUMNS)
+archive_if_columns_changed(PROGRESS_CSV, PROGRESS_COLUMNS)
 load_seen_ids()
+load_progress()
 
 app = FastAPI()
 
@@ -245,6 +267,31 @@ app.mount("/images", StaticFiles(directory=str(POST_IMAGES_DIR)), name="images")
 async def get_config():
     themes = [{"key": key, "label": texts["themes"][key]} for key in theme_keys]
     return {"themes": themes, "returnUrl": RETURN_URL, "completionCode": COMPLETION_CODE, "texts": texts}
+
+
+@app.get("/api/progress")
+def get_progress(pid: str):
+    """Where this participant stands: answered blocks and the last block shown."""
+    if not PID_PATTERN.fullmatch(pid):
+        raise HTTPException(422, "invalid pid")
+    with csv_lock:
+        return {
+            "completedBlocks": sorted(completed_blocks.get(pid, set())),
+            "shownBlock": shown_block.get(pid, 0),
+        }
+
+
+@app.post("/api/progress")
+def report_block_shown(shown: BlockShown):
+    """The frontend reports when a block's feed is shown to the participant."""
+    if not 1 <= shown.blockNumber <= len(block_config):
+        raise HTTPException(422, "unknown block")
+    with csv_lock:
+        if shown.blockNumber > shown_block.get(shown.pid, 0):
+            append_rows(PROGRESS_CSV, PROGRESS_COLUMNS,
+                        [{"timestamp": now_utc(), "pid": shown.pid, "blockNumber": shown.blockNumber}])
+            shown_block[shown.pid] = shown.blockNumber
+    return {"success": True}
 
 
 @app.get("/api/posts", response_model=PostsResponse)
@@ -316,11 +363,14 @@ def submit_block_survey(survey: BlockSurveySubmission):
     } for loc in survey.localizations]
 
     with csv_lock:
-        if survey.submissionId not in seen_ids:
+        done = completed_blocks.setdefault(survey.pid, set())
+        # Store only the first answer per participant and block (retries, reloads, double clicks)
+        if survey.submissionId not in seen_ids and survey.blockNumber not in done:
             append_rows(RECOGNITION_CSV, recognition_columns, [recognition_row])
             if localization_rows:
                 append_rows(LOCALIZATION_CSV, LOCALIZATION_COLUMNS, localization_rows)
-            seen_ids.add(survey.submissionId)
+            done.add(survey.blockNumber)
+        seen_ids.add(survey.submissionId)
     return {"success": True}
 
 

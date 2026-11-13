@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
@@ -9,7 +10,7 @@ import { PostCardComponent } from '../post-card/post-card.component';
 import { BlockSurveyComponent, BlockSurveyResult } from '../block-survey/block-survey.component';
 import { newRequestId } from '../../utils/id.util';
 
-type FeedState = 'intro' | 'viewing' | 'survey' | 'completed';
+type FeedState = 'loading' | 'intro' | 'viewing' | 'survey' | 'completed';
 
 @Component({
   selector: 'app-feed',
@@ -29,7 +30,7 @@ export class FeedComponent implements OnInit {
 
   allPosts = signal<PostData[]>([]);
   currentBlock = signal(1);
-  feedState = signal<FeedState>('intro');
+  feedState = signal<FeedState>('loading');
   totalBlocks = 0;
 
   currentBlockPosts = computed(() => {
@@ -44,16 +45,48 @@ export class FeedComponent implements OnInit {
   private submissionId = '';
 
   ngOnInit() {
-    this.api.getPosts().subscribe(response => {
-      this.allPosts.set(response.posts);
-      const maxBlock = Math.max(...response.posts.map(p => p.blockNumber), 0);
-      this.totalBlocks = maxBlock;
+    const pid = this.session.getPid()!;
+    // Load the posts and where this participant stands, then continue from there
+    forkJoin({ posts: this.api.getPosts(), progress: this.api.getProgress(pid) }).subscribe({
+      next: ({ posts, progress }) => {
+        this.allPosts.set(posts.posts);
+        this.totalBlocks = Math.max(...posts.posts.map(p => p.blockNumber), 0);
+        const done = new Set(progress.completedBlocks);
+        const nextBlock = Array.from({ length: this.totalBlocks }, (_, i) => i + 1).find(b => !done.has(b));
+
+        if (nextBlock === undefined) {
+          // Everything answered already: show the end page with the code again
+          this.finishStudy(pid);
+        } else if (progress.shownBlock >= nextBlock) {
+          // Interrupted while looking at this block: go straight to its questions
+          this.currentBlock.set(nextBlock);
+          this.openSurvey();
+        } else if (nextBlock > 1 || progress.shownBlock > 0) {
+          this.currentBlock.set(nextBlock);
+          this.showBlock();
+        } else {
+          this.feedState.set('intro');
+        }
+      },
+      // Progress unknown (should not happen after the retries): start normally
+      error: () => this.feedState.set('intro'),
     });
   }
 
   startFeed() {
+    this.showBlock();
+  }
+
+  /** Show the feed of the current block and tell the server it has been shown. */
+  private showBlock() {
     this.feedState.set('viewing');
     window.scrollTo({ top: 0 });
+    const pid = this.session.getPid();
+    if (pid) {
+      this.api.reportBlockShown(pid, this.currentBlock()).subscribe({
+        error: err => console.error('Could not save progress', err),
+      });
+    }
   }
 
   onBlockScrollEnd() {
@@ -88,8 +121,7 @@ export class FeedComponent implements OnInit {
           this.finishStudy(pid);
         } else {
           this.currentBlock.update(b => b + 1);
-          this.feedState.set('viewing');
-          window.scrollTo({ top: 0 });
+          this.showBlock();
         }
       },
       error: err => {

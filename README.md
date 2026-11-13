@@ -144,7 +144,7 @@ Three CSV files in `data/`. Every row contains the participant ID (`pid`) and a 
 | `theme_recognition.csv` | participant × block | one TRUE/FALSE column per theme: did the participant notice this theme in the block? |
 | `theme_localization.csv` | participant × block × theme | `theme`, `post1` … `post5` (TRUE/FALSE): in which of the 5 posts did the participant see this theme? |
 
-The columns `eventId` / `submissionId` are technical IDs (used to make sure nothing is stored twice if a participant's connection drops). You can ignore them.
+`progress.csv` is internal bookkeeping (which block each participant has reached, used to continue after an interruption). You do not need it for the analysis. The columns `eventId` / `submissionId` are technical IDs (used to make sure nothing is stored twice if a participant's connection drops). You can ignore them.
 
 **`engagement.csv` is a log of every click**, in the order they happened. If someone likes a post and then unlikes it, there are two rows. This keeps the full sequence and timing. To get the **final state** per participant and post (liked yes/no, followed yes/no, …), use this in R:
 
@@ -175,7 +175,7 @@ If you change the themes in `block_config.json` after data has already been reco
 4. After each block: which themes did you notice? → in which posts?
 5. After the last block: end page with the completion code (or automatic redirect, if `RETURN_URL` is set).
 
-Note: if a participant reloads the page in the middle, the feed starts again at block 1 (with the same `pid`). Their block answers may then appear twice in the CSV files; use the latest timestamp per `pid` and block.
+**Interruptions:** the tool remembers on the server how far each participant got. If someone reloads the page, closes it or comes back later via the survey link (same `pid`), they continue where they left off: interrupted while looking at a block → straight to that block's questions; everything done → the end page with the code. Each block's questions are stored only once per participant, so there are no duplicate answers.
 
 ## Texts and language
 

@@ -33,6 +33,12 @@ function retryOnNetworkError<T>() {
   });
 }
 
+/** Where a participant stands (to continue after a reload or interruption). */
+export interface Progress {
+  completedBlocks: number[];
+  shownBlock: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient);
@@ -43,6 +49,14 @@ export class ApiService {
 
   getPosts(): Observable<PostsResponse> {
     return this.http.get<PostsResponse>('/api/posts');
+  }
+
+  getProgress(pid: string): Observable<Progress> {
+    return this.http.get<Progress>('/api/progress', { params: { pid } }).pipe(retryOnNetworkError());
+  }
+
+  reportBlockShown(pid: string, blockNumber: number): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>('/api/progress', { pid, blockNumber }).pipe(retryOnNetworkError());
   }
 
   sendEngagement(event: EngagementEvent): Observable<{ success: boolean }> {
