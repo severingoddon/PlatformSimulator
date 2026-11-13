@@ -11,6 +11,11 @@ export interface Texts {
     subMessage: string;
     startButton: string;
   };
+  resume: {
+    title: string;
+    message: string;
+    continueButton: string;
+  };
   feed: {
     continueButton: string;
     notifications: string;

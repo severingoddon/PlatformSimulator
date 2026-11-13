@@ -20,6 +20,12 @@
     "startButton": "Start"
   },
 
+  "resume": {
+    "title": "Welcome back!",
+    "message": "You did not finish the feed last time. No problem: you will continue where you left off.",
+    "continueButton": "Continue"
+  },
+
   "feed": {
     "continueButton": "Quick question",
     "notifications": "Notifications",

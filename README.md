@@ -175,7 +175,7 @@ If you change the themes in `block_config.json` after data has already been reco
 4. After each block: which themes did you notice? → in which posts?
 5. After the last block: end page with the completion code (or automatic redirect, if `RETURN_URL` is set).
 
-**Interruptions:** the tool remembers on the server how far each participant got. If someone reloads the page, closes it or comes back later via the survey link (same `pid`), they continue where they left off: they see the posts of the first block whose questions they have not answered yet (a block counts as done once its questions are saved with "Next"); everything done → the end page with the code. If a block is answered again, the new answer replaces the old one, so there is always exactly one answer per participant and block.
+**Interruptions:** the tool remembers on the server how far each participant got. If someone reloads the page, closes it or comes back later via the survey link (same `pid`), they continue where they left off: they first see a short "Welcome back" screen (text under `"resume"` in the text files), then the posts of the first block whose questions they have not answered yet (a block counts as done once its questions are saved with "Next"); everything done → the end page with the code. If a block is answered again, the new answer replaces the old one, so there is always exactly one answer per participant and block.
 
 ## Texts and language
 

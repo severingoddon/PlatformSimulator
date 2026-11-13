@@ -10,7 +10,7 @@ import { PostCardComponent } from '../post-card/post-card.component';
 import { BlockSurveyComponent, BlockSurveyResult } from '../block-survey/block-survey.component';
 import { newRequestId } from '../../utils/id.util';
 
-type FeedState = 'loading' | 'intro' | 'viewing' | 'survey' | 'completed';
+type FeedState = 'loading' | 'intro' | 'resume' | 'viewing' | 'survey' | 'completed';
 
 @Component({
   selector: 'app-feed',
@@ -61,9 +61,10 @@ export class FeedComponent implements OnInit {
           // Nothing started yet
           this.feedState.set('intro');
         } else {
-          // Interrupted: show the posts of the first block whose questions are not answered yet
+          // Interrupted: short "welcome back" screen, then the posts of the
+          // first block whose questions are not answered yet
           this.currentBlock.set(nextBlock);
-          this.showBlock();
+          this.feedState.set('resume');
         }
       },
       // Progress unknown (should not happen after the retries): start normally

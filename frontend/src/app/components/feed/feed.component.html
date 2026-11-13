@@ -30,6 +30,17 @@
   </main>
 }
 
+<!-- Coming back after an interruption -->
+@if (feedState() === 'resume') {
+  <main class="intro">
+    <div class="intro-card">
+      <h1 class="intro-title">{{ texts.resume.title }}</h1>
+      <p class="intro-message">{{ texts.resume.message }}</p>
+      <button class="intro-btn" (click)="startFeed()">{{ texts.resume.continueButton }}</button>
+    </div>
+  </main>
+}
+
 <!-- Feed Content -->
 @if (feedState() === 'viewing') {
   <main class="feed-container">

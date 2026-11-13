@@ -20,6 +20,12 @@
     "startButton": "Los geht's"
   },
 
+  "resume": {
+    "title": "Willkommen zurück!",
+    "message": "Du hast den Feed beim letzten Mal nicht abgeschlossen. Kein Problem: Es geht dort weiter, wo du aufgehört hast.",
+    "continueButton": "Weiter"
+  },
+
   "feed": {
     "continueButton": "Kurze Zwischenfrage",
     "notifications": "Benachrichtigungen",
