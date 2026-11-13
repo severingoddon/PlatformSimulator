@@ -215,7 +215,7 @@ The study content is controlled by `backend/block_config.json`:
 - **themes** – the theme keys offered in the questions after each block. The questions and the CSV columns adapt automatically. Each theme also needs a display name under `"themes"` in every text file (see above).
 - **blocks** – currently 3 blocks. Each block needs **exactly 5 posts**. Add or remove whole blocks to change the length of the feed. Per post: file name, type (`explicit_religion`, `spiritual_implicit`, `filler`, `thematic_control`) and ground-truth themes.
 
-Post images are stored in `postImages/` (50 images are available, the config uses 15 of them). Use JPEG files of about 1100 px width: they load fast on phones and look sharp. If an image listed in `block_config.json` is missing, the tool does not start and tells you which one.
+Post images are stored in `postImages/` (one image per post in the config). To add a post, put its image there and list it in `block_config.json`. Use JPEG files of about 1100 px width: they load fast on phones and look sharp. If an image listed in `block_config.json` is missing, the tool does not start and tells you which one.
 
 After changing `block_config.json` or images, rebuild with `docker compose up -d --build`.
 
