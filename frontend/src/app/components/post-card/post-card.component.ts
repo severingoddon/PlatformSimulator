@@ -93,8 +93,8 @@ export class PostCardComponent {
   }
 
   private sendFeedback() {
-    const demo = this.session.getDemographics();
-    if (!demo) return;
+    const pid = this.session.getPid();
+    if (!pid) return;
 
     const feedback: PostFeedback = {
       postId: this.post().postId,
@@ -104,12 +104,7 @@ export class PostCardComponent {
       followed: this.followed(),
       saved: this.saved(),
       shared: this.shared(),
-      userEmailHash: demo.userEmailHash,
-      alter: demo.alter,
-      religionsangehoerigkeit: demo.religionsangehoerigkeit,
-      bildungsabschluss: demo.bildungsabschluss,
-      herkunft: demo.herkunft,
-      politischeEinstellung: demo.politischeEinstellung,
+      pid,
     };
 
     this.api.sendFeedback(feedback).subscribe();

@@ -1,12 +1,14 @@
 # PlatformSimulator
 
-A simulated Instagram-style feed for research studies. Participants scroll through 50 posts (10 blocks of 5), can like / follow / save / share them, and answer a short survey after each block.
+A simulated Instagram-style feed for research studies. Participants scroll through 50 posts (10 blocks of 5), can like / follow / save / share them, and answer a short question after each block.
+
+The tool is designed to be used **together with a survey tool such as Qualtrics**: participants start in Qualtrics, are sent to this tool via a link, and are sent back to Qualtrics at the end. Demographics and consent are collected in Qualtrics, not here. This tool only records what participants do in the feed, linked to their Qualtrics ID.
 
 ## Setup
 
-**Requirement:** [Docker](https://docs.docker.com/get-docker/) with Docker Compose.
+**Requirement:** a server with [Docker](https://docs.docker.com/get-docker/) (including Docker Compose).
 
-**Start:**
+**1. Start the tool**
 
 ```bash
 git clone <repository-url> PlatformSimulator
@@ -14,60 +16,134 @@ cd PlatformSimulator
 docker compose up -d --build
 ```
 
-The tool is now running at `http://<server>:3005`.
+The tool is now running at `http://<your-server>:3005`.
 
-**Get the results:** all data is written as CSV files to the `data/` folder next to `docker-compose.yml`. Download or copy them from there at any time, even while the tool is running.
+**2. Set the return link** (where participants go when they are done)
 
-**Stop:**
+Open `docker-compose.yml` and enter the link of your follow-up Qualtrics survey:
+
+```yaml
+RETURN_URL: "https://stanford.qualtrics.com/jfe/form/SV_xxxxxxxxxxxx"
+```
+
+Then apply the change:
+
+```bash
+docker compose up -d
+```
+
+**3. Get the results**
+
+All results are written as CSV files to the `data/` folder next to `docker-compose.yml`. You can copy them from there at any time, even while the tool is running.
+
+**Stop the tool:**
 
 ```bash
 docker compose down
 ```
 
-Stopping, restarting or rebuilding the container does **not** delete any data in `data/`.
+Stopping, restarting or updating the tool does **not** delete anything in `data/`.
 
-**Update after code or config changes:**
+**Update after changes to the code, images or `block_config.json`:**
 
 ```bash
 git pull
 docker compose up -d --build
 ```
 
-### Notes for production
+### Before going live
 
-- The container serves plain HTTP on port 3005. For a real study, put it behind your HTTPS reverse proxy (nginx, Caddy, institutional load balancer, …) and forward requests to port 3005.
-- The container restarts automatically after a crash or a server reboot.
-- Back up the `data/` folder regularly. It contains all study results and nothing else.
+- The tool serves plain HTTP on port 3005. Participants should reach it via **HTTPS** (e.g. `https://feed.your-lab.stanford.edu`). Ask your IT to put it behind their HTTPS reverse proxy / web server and forward to port 3005.
+- The tool restarts automatically after a crash or server reboot.
+- Back up the `data/` folder regularly. It contains all results.
+- Do one complete test run yourself (Qualtrics → tool → back to Qualtrics) and check that your ID shows up in all CSV files and in Qualtrics.
+
+## Connecting Qualtrics
+
+Participants are identified by a **participant ID (`pid`)** that Qualtrics puts into the link. This ID is stored in every row of the CSV files, so afterwards you can match the feed data to the Qualtrics answers.
+
+```
+Qualtrics survey 1            This tool                    Qualtrics survey 2
+(consent, demographics)  →    (feed + block questions)  →  (follow-up, debriefing)
+      sends pid ─────────────→ stores pid ────────────────→ receives pid
+```
+
+### Step 1: Link from Qualtrics to the tool
+
+At the end of your first Qualtrics survey, send participants to the tool with this link (replace the host with your own):
+
+```
+https://<your-server>/?pid=${e://Field/ResponseID}
+```
+
+`${e://Field/ResponseID}` is a Qualtrics placeholder. Qualtrics replaces it automatically with each participant's unique Response ID (e.g. `R_3kT9xZp2LmQ8vWd`).
+
+Easiest way: **Survey flow → End of Survey element → Customize → "Redirect to a URL"** and paste the link above. Alternatively, put it as a link into the last question text.
+
+> Recruiting via Prolific? You can use `?pid={{%PROLIFIC_PID%}}` in the Prolific study link instead. Any ID made of letters, digits, `_` and `-` works.
+
+If someone opens the tool **without** a `pid`, they see an "invalid link" message and no data is recorded.
+
+### Step 2: Link from the tool back to Qualtrics
+
+When participants finish the last block, the tool automatically sends them to `RETURN_URL` (see Setup step 2) and adds their ID:
+
+```
+https://stanford.qualtrics.com/jfe/form/SV_xxxxxxxxxxxx?pid=R_3kT9xZp2LmQ8vWd
+```
+
+To store this ID in your second Qualtrics survey: **Survey flow → Add a New Element Here → Embedded Data**, create a field named exactly `pid`, and move this element to the **top** of the survey flow. Qualtrics then saves the ID from the link with each response.
+
+If `RETURN_URL` is left empty, participants see a simple thank-you page instead.
+
+### Step 3: Combine the data
+
+After data collection you have:
+
+- the Qualtrics export (column `ResponseID` from survey 1, column `pid` from survey 2)
+- the CSV files from this tool (column `pid`)
+
+Match them on this ID. Example in R:
+
+```r
+qualtrics  <- read.csv("qualtrics_export.csv")
+engagement <- read.csv("data/engagement.csv")
+combined   <- merge(qualtrics, engagement, by.x = "ResponseID", by.y = "pid")
+```
 
 ## Output data
 
-Three CSV files in `data/`:
+Three CSV files in `data/`. Every row contains the participant ID (`pid`) and a UTC timestamp.
 
-| File | Content |
-|------|---------|
-| `engagement.csv` | One row per participant and post: like / follow / save / share status + demographics |
-| `theme_recognition.csv` | One row per participant and block: which themes were noticed (true/false) + demographics |
-| `theme_localization.csv` | One row per participant, block and theme: which of posts 1–5 contained the theme + demographics |
+| File | One row per … | Columns |
+|------|---------------|---------|
+| `engagement.csv` | participant × post they interacted with | `blockNumber`, `postId`, `postPosition` (1–5 within the block), `liked`, `followed`, `saved`, `shared` (true/false, final state) |
+| `theme_recognition.csv` | participant × block | one true/false column per theme: did the participant notice this theme in the block? |
+| `theme_localization.csv` | participant × block × theme | `theme`, `post1` … `post5`: in which of the 5 posts did the participant see this theme? |
 
-Participants are identified by `userEmailHash` (SHA-256 hash of the email address entered in the demographics form; the plain email is never stored).
+Posts a participant did not interact with at all do not appear in `engagement.csv` (= nothing liked/followed/saved/shared).
 
-## Study flow
+If you change the themes in `block_config.json` after data has already been recorded, the old CSV file is kept as `<name>.archived-<date>.csv` and a new file is started, so columns never get mixed.
 
-1. Participant fills in the demographics form (age, religious affiliation, education, origin, political orientation, email).
+## Study flow (inside the tool)
+
+1. The participant arrives via the link from Qualtrics.
 2. The feed shows 5 posts per block with Instagram-style buttons (like, follow, save, share).
-3. After each block: theme recognition (which themes did you notice?) → theme localization (in which posts?).
-4. After block 10: thank-you page.
+3. After each block: which themes did you notice? → in which posts?
+4. After block 10: automatic redirect back to Qualtrics.
+
+Note: if a participant reloads the page in the middle, the feed starts again at block 1 (with the same `pid`). Their block answers may then appear twice in the CSV files; use the latest timestamp per `pid` and block.
 
 ## Configuration
 
-Everything is controlled by `backend/block_config.json`:
+Everything about the content is controlled by `backend/block_config.json`:
 
-- **themes** – themes offered in the survey (key + label). The survey UI and the CSV columns adapt automatically.
+- **themes** – themes offered in the questions after each block (key + label). The questions and the CSV columns adapt automatically.
 - **blocks** – 10 blocks with 5 posts each. Per post: file name, type (`explicit_religion`, `spiritual_implicit`, `filler`, `thematic_control`) and ground-truth themes.
 
 Post images are stored in `postImages/`.
 
-After changing the configuration or images, rebuild the container with `docker compose up -d --build`.
+After changing the configuration or images, rebuild with `docker compose up -d --build`.
 
 ## Local development (without Docker)
 
@@ -81,7 +157,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Frontend (Node 22+), runs on `http://localhost:4200` and proxies API calls to the backend:
+Frontend (Node 22+), runs on `http://localhost:4200` and forwards API calls to the backend:
 
 ```bash
 cd frontend
@@ -89,4 +165,4 @@ npm install
 npx ng serve --proxy-config proxy.conf.json
 ```
 
-In local development, CSV files are written to `backend/data/`.
+Open `http://localhost:4200/?pid=test123`. CSV files are written to `backend/data/`. To test the return link locally, start the backend with `RETURN_URL="https://example.com" python main.py`.

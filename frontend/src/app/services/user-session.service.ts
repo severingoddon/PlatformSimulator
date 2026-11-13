@@ -1,19 +1,37 @@
 import { Injectable, signal } from '@angular/core';
-import { Demographics } from '../models/demographics.model';
+
+const STORAGE_KEY = 'participantId';
+
+/** Allowed participant IDs: letters, digits, "_" and "-" (matches Qualtrics/Prolific IDs). */
+export const PID_PATTERN = /^[A-Za-z0-9_-]{1,100}$/;
 
 @Injectable({ providedIn: 'root' })
 export class UserSessionService {
-  private demographics = signal<Demographics | null>(null);
+  private pid = signal<string | null>(this.restore());
 
-  setDemographics(data: Demographics): void {
-    this.demographics.set(data);
+  setPid(pid: string): void {
+    this.pid.set(pid);
+    try {
+      sessionStorage.setItem(STORAGE_KEY, pid);
+    } catch {
+      // storage unavailable (e.g. private mode) – the in-memory value is enough
+    }
   }
 
-  getDemographics(): Demographics | null {
-    return this.demographics();
+  getPid(): string | null {
+    return this.pid();
   }
 
-  isComplete(): boolean {
-    return this.demographics() !== null;
+  hasPid(): boolean {
+    return this.pid() !== null;
+  }
+
+  private restore(): string | null {
+    try {
+      const stored = sessionStorage.getItem(STORAGE_KEY);
+      return stored && PID_PATTERN.test(stored) ? stored : null;
+    } catch {
+      return null;
+    }
   }
 }

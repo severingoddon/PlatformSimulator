@@ -8,12 +8,18 @@ export interface ThemeConfig {
   label: string;
 }
 
+export interface AppConfig {
+  themes: ThemeConfig[];
+  /** Where participants are sent after the last block (empty = show thank-you page). */
+  returnUrl: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient);
 
-  getConfig(): Observable<{ themes: ThemeConfig[] }> {
-    return this.http.get<{ themes: ThemeConfig[] }>('/api/config');
+  getConfig(): Observable<AppConfig> {
+    return this.http.get<AppConfig>('/api/config');
   }
 
   getPosts(): Observable<PostsResponse> {

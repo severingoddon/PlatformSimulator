@@ -3,6 +3,11 @@ services:
     build: .
     ports:
       - "3005:3005"
+    environment:
+      # Where participants are sent after finishing the feed, e.g. your follow-up
+      # Qualtrics survey. "?pid=<participant id>" is added automatically.
+      # Leave empty ("") to show a simple thank-you page instead.
+      RETURN_URL: ""
     volumes:
       # Study results (CSV files) are written here on the host machine
       - ./data:/app/backend/data

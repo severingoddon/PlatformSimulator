@@ -1,5 +1,6 @@
 import csv
 import json
+import os
 import threading
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -30,18 +31,18 @@ PROFILE_NAMES = [
 ]
 
 ENGAGEMENT_COLUMNS = [
-    "timestamp", "userEmailHash", "blockNumber", "postId", "postPosition",
+    "timestamp", "pid", "blockNumber", "postId", "postPosition",
     "liked", "followed", "saved", "shared",
-    "alter", "religionsangehoerigkeit", "bildungsabschluss", "herkunft",
-    "politischeEinstellung",
 ]
 
 LOCALIZATION_COLUMNS = [
-    "timestamp", "userEmailHash", "blockNumber", "theme",
+    "timestamp", "pid", "blockNumber", "theme",
     "post1", "post2", "post3", "post4", "post5",
-    "alter", "religionsangehoerigkeit", "bildungsabschluss", "herkunft",
-    "politischeEinstellung",
 ]
+
+# Where participants are sent after the last block, e.g. a follow-up Qualtrics survey.
+# "?pid=<id>" is appended automatically. Empty = show the built-in thank-you page.
+RETURN_URL = os.environ.get("RETURN_URL", "").strip()
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -67,12 +68,21 @@ def load_block_config():
     block_config = [block["posts"] for block in data["blocks"]]
     theme_list = data["themes"]
     theme_keys = [t["key"] for t in theme_list]
-    recognition_columns = [
-        "timestamp", "userEmailHash", "blockNumber",
-        *theme_keys,
-        "alter", "religionsangehoerigkeit", "bildungsabschluss", "herkunft",
-        "politischeEinstellung",
-    ]
+    recognition_columns = ["timestamp", "pid", "blockNumber", *theme_keys]
+
+
+def archive_if_columns_changed(path: Path, columns: list[str]):
+    """If an existing CSV has different columns (older version, changed themes),
+    rename it instead of mixing incompatible rows into one file."""
+    if not path.exists() or path.stat().st_size == 0:
+        return
+    with open(path, newline="", encoding="utf-8") as f:
+        header = next(csv.reader(f), [])
+    if header != columns:
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        archived = path.with_name(f"{path.stem}.archived-{stamp}{path.suffix}")
+        path.rename(archived)
+        print(f"Columns of {path.name} changed - old file kept as {archived.name}")
 
 
 def load_engagement_csv():
@@ -80,7 +90,7 @@ def load_engagement_csv():
         return
     with open(ENGAGEMENT_CSV, newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
-            key = (row["userEmailHash"], row["postId"])
+            key = (row["pid"], row["postId"])
             engagement_store[key] = row
 
 
@@ -106,6 +116,9 @@ def append_csv(path: Path, columns: list[str], row: dict):
 async def lifespan(app: FastAPI):
     load_block_config()
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    archive_if_columns_changed(ENGAGEMENT_CSV, ENGAGEMENT_COLUMNS)
+    archive_if_columns_changed(RECOGNITION_CSV, recognition_columns)
+    archive_if_columns_changed(LOCALIZATION_CSV, LOCALIZATION_COLUMNS)
     load_engagement_csv()
     yield
 
@@ -124,7 +137,7 @@ app.mount("/images", StaticFiles(directory=str(POST_IMAGES_DIR)), name="images")
 
 @app.get("/api/config")
 async def get_config():
-    return {"themes": theme_list}
+    return {"themes": theme_list, "returnUrl": RETURN_URL}
 
 
 @app.get("/api/posts", response_model=PostsResponse)
@@ -148,10 +161,10 @@ async def get_posts():
 
 @app.post("/api/feedback")
 async def submit_feedback(feedback: PostFeedback):
-    key = (feedback.userEmailHash, feedback.postId)
+    key = (feedback.pid, feedback.postId)
     row = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "userEmailHash": feedback.userEmailHash,
+        "pid": feedback.pid,
         "blockNumber": str(feedback.blockNumber),
         "postId": feedback.postId,
         "postPosition": str(feedback.postPosition),
@@ -159,11 +172,6 @@ async def submit_feedback(feedback: PostFeedback):
         "followed": str(feedback.followed).lower(),
         "saved": str(feedback.saved).lower(),
         "shared": str(feedback.shared).lower(),
-        "alter": str(feedback.alter),
-        "religionsangehoerigkeit": feedback.religionsangehoerigkeit,
-        "bildungsabschluss": feedback.bildungsabschluss,
-        "herkunft": feedback.herkunft,
-        "politischeEinstellung": str(feedback.politischeEinstellung),
     }
     with csv_lock:
         engagement_store[key] = row
@@ -174,27 +182,18 @@ async def submit_feedback(feedback: PostFeedback):
 @app.post("/api/block-survey")
 async def submit_block_survey(survey: BlockSurveySubmission):
     now = datetime.now(timezone.utc).isoformat()
-    demo = {
-        "alter": str(survey.alter),
-        "religionsangehoerigkeit": survey.religionsangehoerigkeit,
-        "bildungsabschluss": survey.bildungsabschluss,
-        "herkunft": survey.herkunft,
-        "politischeEinstellung": str(survey.politischeEinstellung),
-    }
-
     recognition_row = {
         "timestamp": now,
-        "userEmailHash": survey.userEmailHash,
+        "pid": survey.pid,
         "blockNumber": str(survey.blockNumber),
         **{key: str(survey.themes.get(key, False)).lower() for key in theme_keys},
-        **demo,
     }
     append_csv(RECOGNITION_CSV, recognition_columns, recognition_row)
 
     for loc in survey.localizations:
         loc_row = {
             "timestamp": now,
-            "userEmailHash": survey.userEmailHash,
+            "pid": survey.pid,
             "blockNumber": str(survey.blockNumber),
             "theme": loc.theme,
             "post1": str(loc.post1).lower(),
@@ -202,7 +201,6 @@ async def submit_block_survey(survey: BlockSurveySubmission):
             "post3": str(loc.post3).lower(),
             "post4": str(loc.post4).lower(),
             "post5": str(loc.post5).lower(),
-            **demo,
         }
         append_csv(LOCALIZATION_CSV, LOCALIZATION_COLUMNS, loc_row)
 

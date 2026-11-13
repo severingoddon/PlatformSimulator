@@ -6,7 +6,7 @@ import { UserSessionService } from './services/user-session.service';
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./components/demographic-form/demographic-form.component').then(m => m.DemographicFormComponent),
+    loadComponent: () => import('./components/start/start.component').then(m => m.StartComponent),
   },
   {
     path: 'feed',
@@ -14,10 +14,7 @@ export const routes: Routes = [
     canActivate: [() => {
       const session = inject(UserSessionService);
       const router = inject(Router);
-      if (session.isComplete()) {
-        return true;
-      }
-      return router.parseUrl('/');
+      return session.hasPid() ? true : router.parseUrl('/');
     }],
   },
   {

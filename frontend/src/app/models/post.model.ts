@@ -18,12 +18,7 @@ export interface PostFeedback {
   followed: boolean;
   saved: boolean;
   shared: boolean;
-  userEmailHash: string;
-  alter: number;
-  religionsangehoerigkeit: string;
-  bildungsabschluss: string;
-  herkunft: string;
-  politischeEinstellung: number;
+  pid: string;
 }
 
 export interface ThemeLocalizationEntry {
@@ -37,12 +32,7 @@ export interface ThemeLocalizationEntry {
 
 export interface BlockSurveyPayload {
   blockNumber: number;
-  userEmailHash: string;
-  alter: number;
-  religionsangehoerigkeit: string;
-  bildungsabschluss: string;
-  herkunft: string;
-  politischeEinstellung: number;
+  pid: string;
   themes: Record<string, boolean>;
   localizations: ThemeLocalizationEntry[];
 }
